@@ -1,0 +1,8 @@
+tmp
+macapp
+torresmo
+torresmo-{server,debug,dev}
+*.db
+static/*.log
+static/node_modules
+static/dist/*{css,js}

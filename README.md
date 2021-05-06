@@ -1,17 +1,17 @@
 # Torresmo
 
-<!--[![GoDoc](https://godoc.org/github.com/mvrilo/protog?status.svg)](https://godoc.org/github.com/mvrilo/protog) 
-[![Go Report Card](https://goreportcard.com/badge/github.com/mvrilo/protog)](https://goreportcard.com/report/github.com/mvrilo/protog) -->
+<!--[![GoDoc](https://godoc.org/github.com/mvrilo/torresmo?status.svg)](https://godoc.org/github.com/mvrilo/torresmo) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/mvrilo/torresmo)](https://goreportcard.com/report/github.com/mvrilo/torresmo) -->
 
-Torresmo is an experimental and tasty torrent client.
+Torresmo is a highly experimental and tasty torrent client built with Go.
 
 ## Features
 
-- single binary
-- rest api
+- single binary build
+- http server and rest api
 - websocket events
-- embedded web interface (with typescript and preact)
-- graphical interface (initial support, mac only)
+- embedded web interface (using esbuild, typescript and preact)
+- graphical interface (mac only for now, via macdriver)
 
 ## Usage
 

@@ -10,10 +10,7 @@ dev: torresmo-dev
 	./torresmo-dev server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=90
 
 torresmo:
-	time go build -race -ldflags="-s -w" -o torresmo cmd/torresmo/*.go
-
-pack: torresmo
-	time upx torresmo
+	time go build -ldflags="-s -w" -o torresmo cmd/torresmo/*.go
 
 torresmo-dev: prepare
 	time go build -race -o torresmo-dev cmd/torresmo/*.go

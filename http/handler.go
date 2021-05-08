@@ -35,7 +35,7 @@ func (h *handler) AddTorrent(ctx *gin.Context) {
 
 	torrent, err := h.client.AddURI(params.URI)
 	if err != nil {
-		ctx.Error(errors.ErrBadRequest.Wrap(err))
+		ctx.Error(errors.ErrInternal.Wrap(err))
 		return
 	}
 
@@ -59,14 +59,10 @@ func (h *handler) errorHandlingMiddleware(ctx *gin.Context) {
 		return
 	}
 
-	status := http.StatusInternalServerError
-	var body interface{} = http.StatusText(status)
-
 	switch er := err.Err.(type) {
-	case errors.Error:
-		ctx.AbortWithStatusJSON(er.Status, er.Error())
+	case *errors.Error:
+		ctx.AbortWithStatusJSON(er.Code, er.Error())
 	default:
-		ctx.AbortWithStatusJSON(status, body)
 	}
 }
 
@@ -98,8 +94,12 @@ func (h *handler) loggingMiddleware(ctx *gin.Context) {
 
 	if status == http.StatusNotFound || status == http.StatusUnauthorized || status < http.StatusBadRequest {
 		log.Info("Request")
-	} else {
-		log.Error("Request")
+		return
+	}
+
+	err := ctx.Errors.Last()
+	if err != nil {
+		log.Error(err)
 	}
 }
 

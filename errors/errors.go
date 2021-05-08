@@ -4,53 +4,56 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
 )
 
 var (
-	ErrBadRequest          = New(http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	ErrInternalServerError = New(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	ErrServerClosed        = ErrInternalServerError.Wrap(http.ErrServerClosed)
+	ErrBadRequest = New(http.StatusText(http.StatusBadRequest)).WithCode(http.StatusBadRequest)
+	ErrInternal   = New(http.StatusText(http.StatusInternalServerError)).WithCode(http.StatusInternalServerError)
 )
 
 type Error struct {
-	Status int    `json:"status,omitempty"`
-	Detail string `json:"detail,omitempty"`
-	Type   string `json:"type,omitempty"`
-	Title  string `json:"title"`
-	extra  []string
-	err    error
+	Code int    `json:"code,omitempty"`
+	Msg  string `json:"message"`
+	err  error
 }
 
-func (e Error) Unwrap() error {
+func (e *Error) Unwrap() error {
 	return e.err
 }
 
-func (e Error) Wrap(err error) Error {
+func (e *Error) Wrap(err error) *Error {
 	if err != nil {
 		e.err = err
 	}
 	return e
 }
 
-func (e Error) Error() string {
-	msg := fmt.Sprintf("%s: %v", e.Title, e.err)
+func (e *Error) Error() string {
+	var msg string
 
-	if e.Status > 0 && e.Detail != "" {
-		msg = fmt.Sprintf("%s (%d), %s: %v", e.Title, e.Status, e.Detail, e.err)
-	} else if e.Status > 0 {
-		msg = fmt.Sprintf("%s (%d): %v", e.Title, e.Status, e.err)
+	switch err := e.err.(type) {
+	case validator.ValidationErrors:
+		msg = fmt.Sprintf("%s is %s", err[0].Field(), err[0].ActualTag())
+	default:
+		msg = err.Error()
 	}
 
-	return msg
+	return fmt.Sprintf("%s (%d): %s", e.Msg, e.Code, msg)
 }
 
-func (e Error) MarshalJSON() ([]byte, error) {
+func (e *Error) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e)
 }
 
-func New(msg string, code int) Error {
-	return Error{
-		Title:  msg,
-		Status: code,
+func (e *Error) WithCode(code int) *Error {
+	e.Code = code
+	return e
+}
+
+func New(msg string) *Error {
+	return &Error{
+		Msg: msg,
 	}
 }

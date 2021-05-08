@@ -8,7 +8,7 @@ require (
 	github.com/anacrolix/log v0.8.0
 	github.com/anacrolix/torrent v1.25.1-0.20210224024805-693c30dd889e
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-playground/validator/v10 v10.4.1 // indirect
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.0.4

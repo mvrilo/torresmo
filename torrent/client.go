@@ -23,7 +23,7 @@ import (
 	"github.com/mvrilo/torresmo/stream"
 )
 
-// const UserAgent = "torresmo"
+const MimeBitTorrent = "application/x-bittorrent"
 
 var ErrTorrentAlreadyAdded = errors.New("torrent already added")
 
@@ -76,7 +76,6 @@ func NewClient(logger log.Logger) (Client, error) {
 	}
 
 	cli.conf.Logger = log2.Discard
-	// cli.conf.DisableUTP = true
 	return cli, nil
 }
 
@@ -132,22 +131,30 @@ func (c *client) Stop() {
 
 func (c *client) download(t *torren.Torrent) chan Torrent {
 	ch := make(chan Torrent)
-	go func(t *torren.Torrent, ch chan Torrent) {
+	go func() {
 		<-t.GotInfo()
-		c.writeTorrentFile(t)
-		nt := newTorrent(t, c.biggestFirst)
-		ch <- nt
 		t.DownloadAll()
+		c.writeTorrentFile(t)
+
+		nt := newTorrent(t)
+		ch <- nt
 
 		if c.biggestFirst {
-			biggestFile(nt).Now()
+			BiggestFileFromTorrent(nt).Now()
 		}
 
+		ticker := time.NewTicker(1 * time.Second)
 		for {
-			c.stream.Publish(jsonTorrent(t))
-			<-time.After(1 * time.Second)
+			<-ticker.C
+
+			data, err := nt.MarshalJSON()
+			if err != nil {
+				continue
+			}
+
+			c.stream.Publish(data)
 		}
-	}(t, ch)
+	}()
 	return ch
 }
 
@@ -210,7 +217,7 @@ func (c *client) getTorrent(hash []byte) Torrent {
 	}
 
 	if t, ok := c.Client.Torrent(metainfo.HashBytes(hash)); ok {
-		return newTorrent(t, false)
+		return newTorrent(t)
 	}
 
 	return nil
@@ -278,7 +285,7 @@ func (c *client) httpGet(uri string) (io.ReadCloser, error) {
 	}
 
 	contentType := res.Header.Get("Content-Type")
-	if contentType != "application/x-bittorrent" {
+	if contentType != MimeBitTorrent {
 		return nil, fmt.Errorf("invalid content-type: %s", contentType)
 	}
 
@@ -315,7 +322,7 @@ func (c *client) Torrents() (torrents []Torrent) {
 		return
 	}
 	for _, t := range c.Client.Torrents() {
-		torrents = append(torrents, newTorrent(t, false))
+		torrents = append(torrents, newTorrent(t))
 	}
 	return
 }

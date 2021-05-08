@@ -1,7 +1,7 @@
 all: torresmo
 
 debug: torresmo
-	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=50 #0000
+	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000
 
 run: torresmo
 	./torresmo server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=9000

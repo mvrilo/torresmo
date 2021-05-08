@@ -33,7 +33,7 @@ type entry struct {
 	pieceLength    uint64
 }
 
-func biggestFile(t Torrent) (biggest File) {
+func BiggestFileFromTorrent(t Torrent) (biggest File) {
 	for _, f := range t.Files() {
 		if biggest == nil {
 			biggest = f
@@ -47,7 +47,7 @@ func biggestFile(t Torrent) (biggest File) {
 	return
 }
 
-func newTorrent(t *torren.Torrent, biggestFirst bool) Torrent {
+func newTorrent(t *torren.Torrent) Torrent {
 	var name string
 	var numPieces int
 	var totalLength uint64
@@ -62,7 +62,7 @@ func newTorrent(t *torren.Torrent, biggestFirst bool) Torrent {
 		pieceLength = uint64(info.PieceLength)
 
 		for _, f := range t.Files() {
-			files = append(files, newFile(f, biggestFirst))
+			files = append(files, newFile(f))
 		}
 	}
 
@@ -129,9 +129,4 @@ func (e entry) String() string {
 	completed := strings.ToLower(bytefmt.ByteSize(e.bytesCompleted))
 	size := strings.ToLower(bytefmt.ByteSize(e.totalLength))
 	return fmt.Sprintf("%s %s/%s %02.2f%%", name, completed, size, percentage)
-}
-
-func jsonTorrent(t *torren.Torrent) (data []byte) {
-	data, _ = newTorrent(t, false).MarshalJSON()
-	return
 }

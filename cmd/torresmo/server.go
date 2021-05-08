@@ -26,7 +26,6 @@ func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
 	var biggestFirst bool
 	var uploadLimit int
 	var downloadLimit int
-	var torrentFiles string
 
 	srvCmd := &cobra.Command{
 		Use:   "server",
@@ -88,7 +87,7 @@ func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
 				panic(err)
 			}
 
-			if torrentFiles != "" {
+			if watchDir != "" {
 				err := cli.ReadTorrentFiles()
 				if err != nil {
 					panic(err)
@@ -110,9 +109,7 @@ func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
 	srvCmd.Flags().BoolVarP(&guiFlag, "gui", "g", true, "Runs graphical interface")
 	srvCmd.Flags().BoolVarP(&seedFlag, "seed", "s", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
-	srvCmd.Flags().BoolVarP(&biggestFirst, "biggestfirst", "b", true, "Prioritize the biggest file in the torrent")
-	// biggestFileFirst
-	srvCmd.Flags().StringVarP(&torrentFiles, "torrentfiles", "t", "downloads", "Read torrent files from directory")
+	srvCmd.Flags().BoolVarP(&biggestFirst, "biggest", "b", true, "Prioritize the biggest file in the torrent")
 	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
 	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")
 	srvCmd.Flags().IntVarP(&downloadLimit, "download-limit", "D", 0, "Download limit")

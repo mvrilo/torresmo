@@ -23,22 +23,19 @@ type Priority interface {
 	Zero()
 }
 
+var _ File = (*file)(nil)
+
 type file struct {
 	*torren.File
 	mu  *sync.Mutex
 	pri byte
 }
 
-func newFile(tf *torren.File, biggestFirst bool) (f *file) {
+func newFile(tf *torren.File) (f *file) {
 	f = &file{
 		File: tf,
 		mu:   new(sync.Mutex),
 		pri:  0,
-	}
-
-	if biggestFirst {
-		f.pri = byte(torren.PiecePriorityNow)
-		f.File.SetPriority(torren.PiecePriorityNow)
 	}
 
 	return
@@ -74,14 +71,10 @@ func (f *file) MarshalJSON() ([]byte, error) {
 		DisplayPath    string
 		Length         int64
 		Offset         int64
-		// Priority       byte
 	}{
 		BytesCompleted: f.BytesCompleted(),
 		DisplayPath:    f.DisplayPath(),
 		Length:         f.Length(),
 		Offset:         f.Offset(),
-		// Priority:       f.pri,
 	})
 }
-
-var _ File = &file{}

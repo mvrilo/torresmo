@@ -17,23 +17,22 @@ Torresmo is a highly experimental and tasty torrent client built with Go.
 
 ```
 $ ./torresmo server -h
-Torresmo's Torrent and HTTP server
+Torresmo torrent client and server
 
 Usage:
   torresmo server [flags]
 
 Flags:
-  -a, --addr string           HTTP Server address (default ":8000")
-  -b, --biggestfirst          Prioritize the biggest file in the torrent (default true)
-  -d, --debug                 Enable seeding (default true)
-  -D, --download-limit int    Download limit
-  -g, --gui                   Runs graphical interface (default true)
-  -h, --help                  help for server
-  -o, --out string            Output directory (default "downloads")
-  -s, --seed                  Enable seeding (default true)
-  -t, --torrentfiles string   Read torrent files from directory (default "downloads")
-  -U, --upload-limit int      Upload limit
-  -w, --watch string          Watch torrents in this directory (default "downloads")
+  -a, --addr string          HTTP Server address (default ":8000")
+  -b, --biggest              Prioritize the biggest file in the torrent (default true)
+  -d, --debug                Enable seeding (default true)
+  -D, --download-limit int   Download limit
+  -g, --gui                  Runs graphical interface (default true)
+  -h, --help                 help for server
+  -o, --out string           Output directory (default "downloads")
+  -s, --seed                 Enable seeding (default true)
+  -U, --upload-limit int     Upload limit
+  -w, --watch string         Watch torrents in this directory (default "downloads")
 ```
 
 ## Example

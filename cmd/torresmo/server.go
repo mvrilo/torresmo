@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
+func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	var out string
 	var addr string
 	var watchDir string
@@ -29,8 +29,9 @@ func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
 
 	srvCmd := &cobra.Command{
 		Use:   "server",
-		Short: "Torresmo's Torrent and HTTP server",
+		Short: "Torresmo torrent client and server",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
 			errCh := make(chan error)
 
 			if addr != "" {
@@ -56,7 +57,7 @@ func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
 			}
 
 			var guiApp gui.GUI
-			go func(ctx context.Context, torresm *torresmo.Torresmo, errCh chan error) {
+			go func() {
 				sig := make(chan os.Signal, 1)
 				signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 				<-sig
@@ -70,7 +71,7 @@ func serverCmd(ctx context.Context, torresm *torresmo.Torresmo) *cobra.Command {
 				if guiApp != nil {
 					guiApp.Stop()
 				}
-			}(ctx, torresm, errCh)
+			}()
 
 			cli := torresm.
 				TorrentClient.

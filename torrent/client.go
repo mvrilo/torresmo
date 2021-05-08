@@ -147,7 +147,7 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 		for {
 			<-ticker.C
 
-			data, err := nt.MarshalJSON()
+			data, err := newTorrent(t).MarshalJSON()
 			if err != nil {
 				continue
 			}
@@ -278,7 +278,6 @@ func (c *client) httpGet(uri string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	// req.Header.Set("User-Agent", UserAgent)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err

@@ -1,13 +1,15 @@
 package torrent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"code.cloudfoundry.org/bytefmt"
 	torren "github.com/anacrolix/torrent"
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Torrent interface {
 	Files() []File

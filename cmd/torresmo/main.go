@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -12,24 +10,19 @@ import (
 )
 
 func main() {
-	runtime.SetMutexProfileFraction(1)
 	runtime.LockOSThread()
-	flag.Parse()
 
-	rootCmd := &cobra.Command{
-		Use:   "torresmo",
-		Short: "Torresmo is an experimental torrent client",
-		// Run: func(cmd *cobra.Command, args []string) {
-		// },
-	}
-
-	ctx := context.Background()
 	torresm, err := torresmo.New()
 	if err != nil {
 		panic(err)
 	}
 
-	rootCmd.AddCommand(serverCmd(ctx, torresm))
+	rootCmd := &cobra.Command{
+		Use:   "torresmo",
+		Short: "Torresmo torrent client and server",
+	}
+
+	rootCmd.AddCommand(serverCmd(torresm))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

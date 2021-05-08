@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	gohttp "net/http"
 	"os"
@@ -20,11 +19,10 @@ import (
 
 func main() {
 	runtime.LockOSThread()
-	flag.Parse()
 
 	rootCmd := &cobra.Command{
 		Use:   "torresmo-server",
-		Short: "Torresmo is an experimental torrent client",
+		Short: "Torresmo torrent client and server",
 		Run: func(cmd *cobra.Command, args []string) {
 			os.MkdirAll("/tmp/torresmo", 0750)
 

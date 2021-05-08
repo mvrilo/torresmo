@@ -1,7 +1,6 @@
 package torrent
 
 import (
-	"encoding/json"
 	"sync"
 
 	torren "github.com/anacrolix/torrent"

@@ -17,6 +17,7 @@ require (
 	github.com/progrium/macdriver v0.1.0
 	github.com/spf13/cobra v1.1.3
 	github.com/ugorji/go v1.2.4 // indirect
+	github.com/vishen/go-chromecast v0.2.9
 	go.uber.org/zap v1.16.0
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.0 // indirect

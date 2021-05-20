@@ -7,6 +7,7 @@ import (
 	gohttp "net/http"
 	"time"
 
+	"github.com/mvrilo/torresmo/cast"
 	"github.com/mvrilo/torresmo/log"
 	"github.com/mvrilo/torresmo/stream"
 	"github.com/mvrilo/torresmo/torrent"
@@ -16,6 +17,7 @@ import (
 var staticFiles embed.FS
 
 type Torresmo struct {
+	Cast          *cast.Cast
 	HTTPServer    *gohttp.Server
 	HTTPHandler   gohttp.Handler
 	Publisher     stream.Publisher
@@ -62,5 +64,6 @@ func New() (*Torresmo, error) {
 		Publisher:     publisher,
 		TorrentClient: torrentClient,
 		StaticFiles:   staticFiles,
+		Cast:          cast.New(),
 	}, nil
 }

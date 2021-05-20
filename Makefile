@@ -1,13 +1,13 @@
 all: torresmo
 
 debug: torresmo
-	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000
+	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000 --castiface=en0
 
 run: torresmo
-	./torresmo server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=9000
+	./torresmo server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=9000 --castiface=en0
 
 dev: torresmo-dev
-	./torresmo-dev server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=90
+	./torresmo-dev server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=90 --castiface=en0
 
 torresmo:
 	time go build -ldflags="-s -w" -o torresmo cmd/torresmo/*.go

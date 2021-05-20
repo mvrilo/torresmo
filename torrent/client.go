@@ -54,6 +54,7 @@ type Client interface {
 	Torrents() []Torrent
 	Stats() Stats
 	ReadTorrentFiles() error
+	OutputDir() string
 }
 
 type client struct {
@@ -77,6 +78,10 @@ func NewClient(logger log.Logger) (Client, error) {
 
 	cli.conf.Logger = log2.Discard
 	return cli, nil
+}
+
+func (c *client) OutputDir() string {
+	return c.conf.DataDir
 }
 
 func (c *client) Start() (err error) {
@@ -211,7 +216,7 @@ func (c *client) writeTorrentFile(t *torrent.Torrent) error {
 
 func (c *client) getTorrent(hash []byte) Torrent {
 	for _, t := range c.Torrents() {
-		if bytes.Equal(t.InfoHash(), hash) {
+		if bytes.Equal([]byte(t.InfoHash()), hash) {
 			return t
 		}
 	}

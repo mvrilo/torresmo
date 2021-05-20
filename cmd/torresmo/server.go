@@ -26,6 +26,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	var biggestFirst bool
 	var uploadLimit int
 	var downloadLimit int
+	var castIface string
 
 	srvCmd := &cobra.Command{
 		Use:   "server",
@@ -42,8 +43,13 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 					torresm.Logger,
 					torresm.StaticFiles,
 					torresm.Publisher,
+					torresm.Cast,
 					debug,
 				)
+
+				if castIface != "" {
+					torresm.Cast.Interface = castIface
+				}
 
 				torresm.HTTPServer = &gohttp.Server{
 					Addr:    addr,
@@ -111,6 +117,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	srvCmd.Flags().BoolVarP(&seedFlag, "seed", "s", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&biggestFirst, "biggest", "b", true, "Prioritize the biggest file in the torrent")
+	srvCmd.Flags().StringVarP(&castIface, "castiface", "c", "", "Interface enabled Chromecast interaction, eg: eth0, en1")
 	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
 	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")
 	srvCmd.Flags().IntVarP(&downloadLimit, "download-limit", "D", 0, "Download limit")

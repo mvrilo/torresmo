@@ -64,7 +64,7 @@ func (h *handler) ListDevices(ctx *gin.Context) {
 	ct, cancel := context.WithTimeout(ctx, time.Duration(t)*time.Second)
 	defer cancel()
 
-	devices, err := h.cast.Devices(ct)
+	devices, err := h.cast.ListDevices(ct)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -81,6 +81,16 @@ func (h *handler) ConnectDevice(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
+	ctx.Status(http.StatusNoContent)
+}
+
+func (h *handler) PauseCast(ctx *gin.Context) {
+	h.cast.Application.Stop()
+	ctx.Status(http.StatusNoContent)
+}
+
+func (h *handler) StopCast(ctx *gin.Context) {
+	h.cast.Application.Stop()
 	ctx.Status(http.StatusNoContent)
 }
 
@@ -106,8 +116,20 @@ func (h *handler) PlayHash(ctx *gin.Context) {
 			continue
 		}
 
-		f := torrent.BiggestFileFromTorrent(t)
-		outputdir := filepath.Join(h.client.OutputDir(), f.Path())
+		var file torrent.File
+		filename := ctx.Query("file")
+		if filename == "" {
+			file = torrent.BiggestFileFromTorrent(t)
+		} else {
+			for _, f := range t.Files() {
+				if f.Name() == filename {
+					file = f
+					break
+				}
+			}
+		}
+
+		outputdir := filepath.Join(h.client.OutputDir(), file.Path())
 		err := h.play(outputdir)
 		if err != nil {
 			ctx.Error(err)
@@ -117,11 +139,6 @@ func (h *handler) PlayHash(ctx *gin.Context) {
 		ctx.Status(http.StatusCreated)
 		break
 	}
-}
-
-func (h *handler) StopCast(ctx *gin.Context) {
-	h.cast.Application.Stop()
-	ctx.Status(http.StatusNoContent)
 }
 
 func (h *handler) LoadFile(ctx *gin.Context) {

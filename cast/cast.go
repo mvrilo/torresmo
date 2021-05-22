@@ -45,7 +45,7 @@ func New() *Cast {
 	}
 }
 
-func (c *Cast) Devices(ctx context.Context) ([]Device, error) {
+func (c *Cast) discover(ctx context.Context) (<-chan castdns.CastEntry, error) {
 	if c.Interface == "" {
 		return nil, ErrMissingInterface
 	}
@@ -55,7 +55,11 @@ func (c *Cast) Devices(ctx context.Context) ([]Device, error) {
 		return nil, err
 	}
 
-	devicesChan, err := castdns.DiscoverCastDNSEntries(ctx, iface)
+	return castdns.DiscoverCastDNSEntries(ctx, iface)
+}
+
+func (c *Cast) ListDevices(ctx context.Context) ([]Device, error) {
+	devicesChan, err := c.discover(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -73,19 +77,29 @@ func (c *Cast) Connect(ctx context.Context, uuid string) (err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	var device Device
 	devices := c.lastFoundDevices
-	if devices == nil || len(devices) < 1 {
-		devices, err = c.Devices(ctx)
-		if err != nil {
-			return err
+	if devices != nil && len(devices) > 1 {
+		for _, d := range devices {
+			if d.GetUUID() == uuid {
+				device = d
+				break
+			}
 		}
 	}
 
-	var device Device
-	for _, d := range devices {
-		if d.GetUUID() == uuid {
-			device = d
-			break
+	if device == nil {
+		devicesChan, err := c.discover(ctx)
+		if err != nil {
+			return err
+		}
+
+		for dev := range devicesChan {
+			if dev.GetUUID() == uuid {
+				device = dev
+				break
+			}
+			devices = append(devices, device)
 		}
 	}
 

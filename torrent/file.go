@@ -1,6 +1,7 @@
 package torrent
 
 import (
+	"path/filepath"
 	"sync"
 
 	torren "github.com/anacrolix/torrent"
@@ -13,6 +14,7 @@ type File interface {
 	BytesCompleted() int64
 	Length() int64
 	Offset() int64
+	Name() string
 }
 
 type Priority interface {
@@ -39,6 +41,11 @@ func newFile(tf *torren.File) (f *file) {
 	}
 
 	return
+}
+
+func (f *file) Name() string {
+	_, name := filepath.Split(f.File.Path())
+	return name
 }
 
 func (f *file) Now() {

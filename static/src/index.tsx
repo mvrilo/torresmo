@@ -27,14 +27,18 @@ const humanBytes = (bytes: number) => {
   return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + sizes[i];
 };
 
-const List = ({ torrents }) => {
-  if (Object.keys(torrents).length === 0) {
-    return [<p>No torrents yet</p>];
+const List = ({ torrents, header }) => {
+  const count = Object.keys(torrents).length;
+  const list = [<h2>{header} {count > 0 ? `(${count})` : ""}</h2>];
+
+  if (count === 0) {
+    list.push(<p>None yet</p>);
+    return list;
   }
 
-  const list = [];
-  for (const name in torrents) {
-    const { speed, infoHash, files, totalLength, bytesCompleted } = torrents[name];
+  for (const i in torrents) {
+    const torrent = torrents[i];
+    const { name, speed, infoHash, files, totalLength, bytesCompleted } = torrent;
     const percentage = parseFloat(bytesCompleted / totalLength * 100.0).toFixed(2);
     const downloaded = humanBytes(bytesCompleted);
     const total = humanBytes(totalLength);
@@ -66,7 +70,7 @@ const Header = ({ connected }) => {
         Torresmo 
         <small style={{color}}> {status} </small>
       </h1>
-      <p style={styles.info}> paste a magnet uri to start downloading</p>
+      <p style={styles.info}>paste a magnet uri to start downloading</p>
     </nav>
   );
 };
@@ -139,7 +143,8 @@ const Torresmo = () => {
   return (
     <div>
       <Header connected={status} />
-      <List torrents={torrents} />
+      <List header="Downloading" torrents={Object.keys(torrents).filter((torrent) => !torrents[torrent].bytesCompleted).map((torrent) => torrents[torrent])} />
+      <List header="Completed" torrents={Object.keys(torrents).filter((torrent) => torrents[torrent].bytesCompleted).map((torrent) => torrents[torrent])} />
     </div>
   );
 };

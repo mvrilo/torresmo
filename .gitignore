@@ -5,4 +5,5 @@ torresmo-{server,debug,dev}
 *.db
 static/*.log
 static/node_modules
-static/dist/*{css,js}
+static/dist/*.css
+static/dist/*.js

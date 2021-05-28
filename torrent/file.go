@@ -74,16 +74,18 @@ func (f *file) GetPriority() byte {
 
 func (f *file) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		BytesCompleted int64
-		Path           string
-		DisplayPath    string
-		Length         int64
-		Offset         int64
+		BytesCompleted int64  `json:"bytesCompleted"`
+		Length         int64  `json:"length"`
+		Offset         int64  `json:"offset"`
+		Path           string `json:"path"`
+		DisplayPath    string `json:"displayPath"`
+		Name           string `json:"name"`
 	}{
 		BytesCompleted: f.BytesCompleted(),
 		Path:           f.Path(),
 		DisplayPath:    f.DisplayPath(),
 		Length:         f.Length(),
 		Offset:         f.Offset(),
+		Name:           f.Name(),
 	})
 }

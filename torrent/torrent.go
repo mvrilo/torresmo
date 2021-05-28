@@ -13,7 +13,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Torrent interface {
 	Files() []File
-	InfoHash() []byte
+	InfoHash() string
 	Name() string
 	TotalLength() uint64
 	URI() string
@@ -29,7 +29,7 @@ type entry struct {
 	numPieces      int
 	files          []File
 	nodes          []string
-	infoHash       []byte
+	infoHash       string
 	totalLength    uint64
 	bytesCompleted uint64
 	pieceLength    uint64
@@ -79,7 +79,7 @@ func newTorrent(t *torren.Torrent) Torrent {
 		name:           name,
 		numPieces:      numPieces,
 		totalLength:    totalLength,
-		infoHash:       metainfo.HashInfoBytes().Bytes(),
+		infoHash:       metainfo.HashInfoBytes().HexString(),
 		bytesCompleted: uint64(t.BytesCompleted()),
 		pieceLength:    pieceLength,
 	}
@@ -87,7 +87,7 @@ func newTorrent(t *torren.Torrent) Torrent {
 
 func (e entry) Files() []File          { return e.files }
 func (e entry) Downloaded() int        { return e.numPieces }
-func (e entry) InfoHash() []byte       { return e.infoHash }
+func (e entry) InfoHash() string       { return e.infoHash }
 func (e entry) Name() string           { return e.name }
 func (e entry) URI() string            { return e.uri }
 func (e entry) TotalLength() uint64    { return e.totalLength }
@@ -101,7 +101,7 @@ func (e entry) MarshalJSON() ([]byte, error) {
 		Name           string `json:"name"`
 		NumPieces      int    `json:"numPieces"`
 		TotalLength    uint64 `json:"totalLength"`
-		InfoHash       []byte `json:"infoHash"`
+		InfoHash       string `json:"infoHash"`
 		BytesCompleted uint64 `json:"bytesCompleted"`
 		PieceLength    uint64 `json:"pieceLength"`
 		Completed      bool   `json:"completed"`

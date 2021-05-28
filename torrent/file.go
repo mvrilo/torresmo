@@ -1,6 +1,7 @@
 package torrent
 
 import (
+	"path/filepath"
 	"sync"
 
 	torren "github.com/anacrolix/torrent"
@@ -9,9 +10,11 @@ import (
 type File interface {
 	Priority
 	DisplayPath() string
+	Path() string
 	BytesCompleted() int64
 	Length() int64
 	Offset() int64
+	Name() string
 }
 
 type Priority interface {
@@ -38,6 +41,11 @@ func newFile(tf *torren.File) (f *file) {
 	}
 
 	return
+}
+
+func (f *file) Name() string {
+	_, name := filepath.Split(f.File.Path())
+	return name
 }
 
 func (f *file) Now() {
@@ -67,11 +75,13 @@ func (f *file) GetPriority() byte {
 func (f *file) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		BytesCompleted int64
+		Path           string
 		DisplayPath    string
 		Length         int64
 		Offset         int64
 	}{
 		BytesCompleted: f.BytesCompleted(),
+		Path:           f.Path(),
 		DisplayPath:    f.DisplayPath(),
 		Length:         f.Length(),
 		Offset:         f.Offset(),

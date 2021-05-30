@@ -9,13 +9,13 @@ torresmo-dev: prepare
 	time go build -race -o torresmo-dev cmd/torresmo/*.go
 
 run: torresmo
-	./torresmo server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=9000
+	./torresmo server --gui --serve --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=9000
 
 dev: torresmo-dev
-	./torresmo-dev server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=90
+	./torresmo-dev server --gui --serve --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=90
 
 debug: torresmo
-	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000
+	./torresmo server --debug --gui --serve --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000
 
 macapp:
 	go build -o macapp ./tools/macapp/main.go

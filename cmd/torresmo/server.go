@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	gohttp "net/http"
 	"os"
 	"os/signal"
@@ -23,6 +24,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	var debug bool
 	var guiFlag bool
 	var seedFlag bool
+	var serve bool
 	var biggestFirst bool
 	var uploadLimit int
 	var downloadLimit int
@@ -36,11 +38,16 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 
 			if addr != "" {
 				torresm.Logger.Info(fmt.Sprintf("Starting HTTP server at %s", addr))
+				var outFiles fs.FS
+				if serve {
+					outFiles = os.DirFS(out)
+				}
 
 				torresm.HTTPHandler = http.NewHandler(
 					torresm.TorrentClient,
 					torresm.Logger,
 					torresm.StaticFiles,
+					outFiles,
 					torresm.Publisher,
 					debug,
 				)
@@ -109,6 +116,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	srvCmd.Flags().BoolVarP(&guiFlag, "gui", "g", true, "Runs graphical interface")
 	srvCmd.Flags().BoolVarP(&seedFlag, "seed", "s", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
+	srvCmd.Flags().BoolVarP(&serve, "serve", "e", true, "Serve downloaded files")
 	srvCmd.Flags().BoolVarP(&biggestFirst, "biggest", "b", true, "Prioritize the biggest file in the torrent")
 	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
 	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")

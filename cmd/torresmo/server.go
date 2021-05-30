@@ -56,7 +56,6 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				}()
 			}
 
-			var guiApp gui.GUI
 			go func() {
 				sig := make(chan os.Signal, 1)
 				signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
@@ -68,8 +67,8 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 
 				close(errCh)
 
-				if guiApp != nil {
-					guiApp.Stop()
+				if gui.App != nil {
+					gui.App.Stop()
 				}
 			}()
 
@@ -95,9 +94,9 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				}
 			}
 
-			if guiFlag {
-				guiApp = gui.NewGUI(torresm)
-				guiApp.Start()
+			if guiFlag && gui.App != nil {
+				gui.App.Register(torresm)
+				gui.App.Start()
 			}
 
 			if err := <-errCh; err != nil {

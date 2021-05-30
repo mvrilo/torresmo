@@ -38,6 +38,7 @@ static/dist/bundle.js:
 	@(cd static; yarn build)
 
 prepare:
+	go mod tidy
 	go fmt ./...
 	go vet ./...
 	go run honnef.co/go/tools/cmd/staticcheck -- $$(go list ./...)

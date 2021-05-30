@@ -80,7 +80,7 @@ func (h *handler) loggingMiddleware(ctx *gin.Context) {
 
 	w := ctx.Writer
 	status := w.Status()
-	latency := time.Now().Sub(start)
+	latency := time.Since(start)
 
 	log = log.With(
 		"status", status,

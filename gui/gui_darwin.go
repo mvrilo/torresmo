@@ -1,10 +1,10 @@
 // +build darwin
+// +build !arm64
 
 package gui
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -17,22 +17,23 @@ import (
 	"github.com/progrium/macdriver/objc"
 )
 
+func init() {
+	App = &guiMac{}
+}
+
 type guiMac struct {
 	sync.Mutex
 	t   *torresmo.Torresmo
 	app cocoa.NSApplication
 }
 
-var _ GUI = &guiMac{}
+var _ GUI = (*guiMac)(nil)
 
-func NewGUI(torresm *torresmo.Torresmo) GUI {
-	log := torresm.Logger
-	log.Info(fmt.Sprintf("Darwin GUI Started"))
-
-	macapp := &guiMac{t: torresm}
-	macapp.app = cocoa.NSApp_WithDidLaunch(macapp.setup)
-
-	return macapp
+func (g *guiMac) Register(torresm *torresmo.Torresmo) {
+	g.t = torresm
+	log := g.t.Logger
+	g.app = cocoa.NSApp_WithDidLaunch(g.setup)
+	log.Info("Darwin GUI Started")
 }
 
 func (g *guiMac) setup(n objc.Object) {

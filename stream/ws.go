@@ -18,14 +18,14 @@ type wsPublisher struct {
 	log   log.Logger
 }
 
-func (s *wsPublisher) closeConn(conn net.Conn) {
-	s.mu.Lock()
-	conn.Close()
-	if _, ok := s.conns[conn]; ok {
-		delete(s.conns, conn)
-	}
-	s.mu.Unlock()
-}
+// func (s *wsPublisher) closeConn(conn net.Conn) {
+// 	s.mu.Lock()
+// 	conn.Close()
+// 	if _, ok := s.conns[conn]; ok {
+// 		delete(s.conns, conn)
+// 	}
+// 	s.mu.Unlock()
+// }
 
 func (s *wsPublisher) handleConn(conn net.Conn) {
 	s.mu.Lock()
@@ -57,13 +57,6 @@ func (s *wsPublisher) getConns() (conns []net.Conn) {
 	return
 }
 
-func (s *wsPublisher) removeConn(conn net.Conn) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	conn.Close()
-	delete(s.conns, conn)
-}
-
 func (s *wsPublisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, _, _, err := ws.UpgradeHTTP(r, w)
 	if err != nil {
@@ -81,7 +74,6 @@ func (s *wsPublisher) Publish(data []byte) {
 			continue
 		}
 	}
-	return
 }
 
 func Websocket(logger log.Logger) Publisher {

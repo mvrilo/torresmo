@@ -13,7 +13,6 @@ import (
 	"time"
 
 	log2 "github.com/anacrolix/log"
-	"github.com/anacrolix/torrent"
 	torren "github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
@@ -189,7 +188,7 @@ func (c *client) ReadTorrentFiles() error {
 	return nil
 }
 
-func (c *client) writeTorrentFile(t *torrent.Torrent) error {
+func (c *client) writeTorrentFile(t *torren.Torrent) error {
 	err := os.MkdirAll(c.conf.DataDir, 0750)
 	if err != nil {
 		return err
@@ -261,7 +260,7 @@ func (c *client) addReader(r io.Reader) (chan Torrent, error) {
 }
 
 func (c *client) addMagnet(uri string) (chan Torrent, error) {
-	spec, err := torrent.TorrentSpecFromMagnetUri(uri)
+	spec, err := torren.TorrentSpecFromMagnetUri(uri)
 	if err != nil {
 		return nil, err
 	}

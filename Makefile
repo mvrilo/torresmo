@@ -15,22 +15,20 @@ torresmo:
 torresmo-dev: prepare
 	time go build -race -o torresmo-dev cmd/torresmo/*.go
 
-torresmo-server: prepare
-	time go build -o torresmo-server cmd/torresmo-server/main.go
+macapp:
+	go build -o macapp ./tools/macapp/main.go
 
-mac: macapp torresmo-server
-	cp torresmo-server assets/;
+mac: macapp torresmo
+	chmod +x macassets/torresmo.sh;
+	cp torresmo macassets/;
 	./macapp \
-		-assets=./assets \
-		-bin=torresmo-server \
+		-assets=./macassets \
+		-bin=torresmo.sh \
 		-dmg=Torresmo \
 		-name=Torresmo \
 		-o=./dist \
 		-identifier co.murilo.torresmo \
-		-icon=./assets/icon.png
-
-macapp:
-	go build -o macapp ./tools/macapp/main.go
+		-icon=./macassets/icon.png
 
 web: static/dist/bundle.js
 

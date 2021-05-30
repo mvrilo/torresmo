@@ -1,3 +1,4 @@
+.DS_Store
 tmp
 macapp
 torresmo
@@ -7,3 +8,5 @@ static/*.log
 static/node_modules
 static/dist/*.css
 static/dist/*.js
+assets/torresmo
+dist/

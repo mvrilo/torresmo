@@ -1,7 +1,12 @@
+.PHONY: all run dev debug mac web prepare clean test
+
 all: torresmo
 
-debug: torresmo
-	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000
+torresmo:
+	time go build -ldflags="-s -w" -o torresmo cmd/torresmo/*.go
+
+torresmo-dev: prepare
+	time go build -race -o torresmo-dev cmd/torresmo/*.go
 
 run: torresmo
 	./torresmo server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=9000
@@ -9,11 +14,8 @@ run: torresmo
 dev: torresmo-dev
 	./torresmo-dev server --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=90
 
-torresmo:
-	time go build -ldflags="-s -w" -o torresmo cmd/torresmo/*.go
-
-torresmo-dev: prepare
-	time go build -race -o torresmo-dev cmd/torresmo/*.go
+debug: torresmo
+	./torresmo server --debug --gui --watch=downloads --out=downloads --addr=:8000 --upload-limit=100 --download-limit=500000
 
 macapp:
 	go build -o macapp ./tools/macapp/main.go
@@ -38,6 +40,7 @@ static/dist/bundle.js:
 prepare:
 	go fmt ./...
 	go vet ./...
+	go run honnef.co/go/tools/cmd/staticcheck -- $$(go list ./...)
 
 test:
 	go test ./...

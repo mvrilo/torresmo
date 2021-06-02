@@ -76,6 +76,12 @@ func (g *guiMac) setup(n objc.Object) {
 	tcli := g.t.TorrentClient
 	go func() {
 		completed := make(map[string]struct{})
+		for _, t := range tcli.Torrents() {
+			if !t.Completed() {
+				continue
+			}
+			completed[t.Name()] = struct{}{}
+		}
 
 		for {
 			if torrents := tcli.Torrents(); len(torrents) > 0 {
@@ -88,7 +94,6 @@ func (g *guiMac) setup(n objc.Object) {
 					lines = append(lines, t.String())
 
 					if _, ok := completed[t.Name()]; t.Completed() && !ok {
-						println(t.Name(), t.Completed(), t.BytesCompleted())
 						completed[t.Name()] = struct{}{}
 						notifyCompleted(t.Name())
 					}

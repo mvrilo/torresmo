@@ -5,41 +5,93 @@ package gui
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/mvrilo/torresmo"
+	torresm "github.com/mvrilo/torresmo"
 	"github.com/mvrilo/torresmo/log"
+
 	"github.com/progrium/macdriver/cocoa"
 	"github.com/progrium/macdriver/core"
 	"github.com/progrium/macdriver/objc"
+	"github.com/progrium/macdriver/webkit"
 )
 
 func init() {
-	App = &guiMac{}
+	App = &GuiMac{}
 }
 
-type guiMac struct {
+type GuiMac struct {
 	sync.Mutex
-	t   *torresmo.Torresmo
+	t   *torresm.Torresmo
 	app cocoa.NSApplication
 }
 
-var _ GUI = (*guiMac)(nil)
+var _ GUI = (*GuiMac)(nil)
 
-func (g *guiMac) Register(torresm *torresmo.Torresmo) {
+func (g *GuiMac) Register(torresm *torresm.Torresmo) {
 	g.t = torresm
 	log := g.t.Logger
-	g.app = cocoa.NSApp_WithDidLaunch(g.setup)
+
+	config := webkit.WKWebViewConfiguration_New()
+	config.Preferences().SetValueForKey(core.True, core.String("developerExtrasEnabled"))
+
+	url := core.URL(fmt.Sprintf("http://%s", g.t.HTTPServer.Addr))
+	req := core.NSURLRequest_Init(url)
+
+	g.app = cocoa.NSApp_WithDidLaunch(func(n objc.Object) {
+		g.setup(n, req, config)
+	})
+
 	log.Info("Darwin GUI Started")
 }
 
-func (g *guiMac) setup(n objc.Object) {
+func (g *GuiMac) setup(n objc.Object, req core.NSURLRequest, config webkit.WKWebViewConfiguration) {
 	obj := cocoa.NSStatusBar_System().StatusItemWithLength(cocoa.NSVariableStatusItemLength)
 	obj.Retain()
 	obj.Button().SetTitle("Torresmo")
+
+	wv := webkit.WKWebView_Init(cocoa.NSScreen_Main().Frame(), config)
+	wv.Retain()
+	// wv.SetOpaque(false)
+	// wv.SetBackgroundColor(cocoa.NSColor_Clear())
+	// wv.SetValueForKey(core.False, core.String("drawsBackground"))
+	wv.LoadRequest(req)
+
+	win := cocoa.NSWindow_Init(
+		cocoa.NSScreen_Main().Frame(),
+		cocoa.NSClosableWindowMask|cocoa.NSBorderlessWindowMask,
+		cocoa.NSBackingStoreBuffered,
+		false,
+	)
+	win.SetContentView(wv)
+	// win.SetBackgroundColor(cocoa.NSColor_Clear())
+	// win.SetOpaque(false)
+	// win.SetTitleVisibility(cocoa.NSWindowTitleHidden)
+	win.SetTitlebarAppearsTransparent(true)
+	win.SetIgnoresMouseEvents(true)
+	win.SetLevel(cocoa.NSMainMenuWindowLevel + 2)
+	win.MakeKeyAndOrderFront(win)
+	win.SetCollectionBehavior(cocoa.NSWindowCollectionBehaviorCanJoinAllSpaces)
+	win.Send("setHasShadow:", false)
+
+	openWindow := cocoa.NSMenuItem_New()
+	openWindow.Retain()
+	openWindow.SetTitle("Open")
+	openWindow.SetAction(objc.Sel("open:"))
+
+	cocoa.DefaultDelegateClass.AddMethod("open:", func(_ objc.Object) {
+		if win.IgnoresMouseEvents() {
+			win.SetLevel(cocoa.NSMainMenuWindowLevel - 1)
+			openWindow.SetState(1)
+		} else {
+			win.SetLevel(cocoa.NSMainMenuWindowLevel + 2)
+			openWindow.SetState(0)
+		}
+	})
 
 	itemTorrents := cocoa.NSMenuItem_New()
 	itemTorrents.SetAttributedTitle("no torrents yet")
@@ -82,16 +134,16 @@ func (g *guiMac) setup(n objc.Object) {
 	})
 
 	menu := cocoa.NSMenu_New()
+	menu.AddItem(openWindow)
 	menu.AddItem(itemTorrents)
-	// menu.AddItem(itemNew)
 	menu.AddItem(itemQuit)
 	obj.SetMenu(menu)
 }
 
-func (g *guiMac) Start() {
+func (g *GuiMac) Start() {
 	g.app.Run()
 }
 
-func (g *guiMac) Stop() {
+func (g *GuiMac) Stop() {
 	g.app.Terminate()
 }

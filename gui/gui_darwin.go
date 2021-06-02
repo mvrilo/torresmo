@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mvrilo/torresmo"
+	torresm "github.com/mvrilo/torresmo"
 	"github.com/mvrilo/torresmo/log"
 	"github.com/progrium/macdriver/cocoa"
 	"github.com/progrium/macdriver/core"
@@ -23,17 +23,46 @@ func init() {
 
 type guiMac struct {
 	sync.Mutex
-	t   *torresmo.Torresmo
+	t   *torresm.Torresmo
 	app cocoa.NSApplication
 }
 
+type NSUserNotification struct {
+	objc.Object
+}
+
+var NSUserNotification_ = objc.Get("NSUserNotification")
+
+type NSUserNotificationCenter struct {
+	objc.Object
+}
+
+var NSUserNotificationCenter_ = objc.Get("NSUserNotificationCenter")
+
 var _ GUI = (*guiMac)(nil)
 
-func (g *guiMac) Register(torresm *torresmo.Torresmo) {
+func (g *guiMac) Register(torresm *torresm.Torresmo) {
 	g.t = torresm
 	log := g.t.Logger
 	g.app = cocoa.NSApp_WithDidLaunch(g.setup)
+
+	nsbundle := cocoa.NSBundle_Main().Class()
+	nsbundle.AddMethod("__bundleIdentifier", func(_ objc.Object) objc.Object {
+		return core.String("co.murilo.torresmo")
+	})
+	nsbundle.Swizzle("bundleIdentifier", "__bundleIdentifier")
+
 	log.Info("Darwin GUI Started")
+}
+
+func notifyCompleted(value string) {
+	notification := NSUserNotification{NSUserNotification_.Alloc().Init()}
+	notification.Set("title:", core.String("Torrent Downloaded"))
+	notification.Set("informativeText:", core.String(value))
+
+	center := NSUserNotificationCenter{NSUserNotificationCenter_.Send("defaultUserNotificationCenter")}
+	center.Send("deliverNotification:", notification)
+	notification.Release()
 }
 
 func (g *guiMac) setup(n objc.Object) {
@@ -46,12 +75,25 @@ func (g *guiMac) setup(n objc.Object) {
 
 	tcli := g.t.TorrentClient
 	go func() {
+		completed := make(map[string]struct{})
+
 		for {
 			if torrents := tcli.Torrents(); len(torrents) > 0 {
 				var lines []string
 				for _, t := range torrents {
+					if t.Name() == "" {
+						continue
+					}
+
 					lines = append(lines, t.String())
+
+					if _, ok := completed[t.Name()]; t.Completed() && !ok {
+						println(t.Name(), t.Completed(), t.BytesCompleted())
+						completed[t.Name()] = struct{}{}
+						notifyCompleted(t.Name())
+					}
 				}
+
 				sort.Strings(lines)
 				core.Dispatch(func() {
 					itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))

@@ -75,6 +75,9 @@ const Header = ({ connected }) => {
   );
 };
 
+const filterTorrents = (torrents = [], completed = false) =>
+  Object.keys(torrents).filter((torrent) => torrents[torrent].completed === completed).map((torrent) => torrents[torrent]);
+
 const Torresmo = () => {
   const [ready, setReady] = useState(false);
   const [status, setStatus] = useState(false);
@@ -143,8 +146,8 @@ const Torresmo = () => {
   return (
     <div>
       <Header connected={status} />
-      <List header="Downloading" torrents={Object.keys(torrents).filter((torrent) => !torrents[torrent].bytesCompleted).map((torrent) => torrents[torrent])} />
-      <List header="Completed" torrents={Object.keys(torrents).filter((torrent) => torrents[torrent].bytesCompleted).map((torrent) => torrents[torrent])} />
+      <List header="Downloading" torrents={filterTorrents(torrents, false)} />
+      <List header="Completed" torrents={filterTorrents(torrents, true)} />
     </div>
   );
 };

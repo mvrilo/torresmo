@@ -9,4 +9,6 @@ static/node_modules
 static/dist/*.css
 static/dist/*.js
 assets/torresmo
-dist/
+/dist/
+/downloads
+depaware.txt

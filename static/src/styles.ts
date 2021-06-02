@@ -5,7 +5,7 @@ const info = {
 const listItem = {
   minHeight: "40px",
   position: "relative",
-  marginBottom: "12px"
+  marginBottom: "30px"
 };
 
 const listItemBackground = {

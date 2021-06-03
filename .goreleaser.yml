@@ -37,10 +37,12 @@ brews:
       name: homebrew-taps
     folder: Formula
     homepage: https://github.com/mvrilo/torresmo/
-    description: Experimental Torrent client and server
+    description: Experimental torrent client and server
     license: MIT
     commit_author:
       name: Murilo Santana
       email: mvrilo@gmail.com
     install: |-
       bin.install "torresmo"
+    test: |
+      system "#{bin}/torresmo -v"

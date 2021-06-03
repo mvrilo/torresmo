@@ -126,7 +126,7 @@ func NewHandler(cli torrent.Client, logger log.Logger, staticFiles fs.FS, downlo
 	router.GET("/api/stats/", h.Stats)
 	router.GET("/api/torrents/", h.Torrents)
 	router.POST("/api/torrents/", h.AddTorrent)
-	router.GET("/api/events/", gin.WrapH(h.stream))
+	router.GET("/api/events/", gin.WrapH(h.stream.Serve()))
 	router.Use(gin.WrapH(http.FileServer(http.FS(staticFiles))))
 
 	return h

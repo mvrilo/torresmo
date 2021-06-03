@@ -10,7 +10,7 @@ import { addTorrent, listTorrents } from "./api";
 import "terminal.css";
 
 const sizes = ['b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'];
-const WSURI = "ws://localhost:8000/api/events/";
+const WSURI = "ws://localhost:8000/api/events/?rooms=downloading,completed";
 
 const ws = new WebsocketHandler(WSURI);
 
@@ -130,7 +130,9 @@ const Torresmo = () => {
 
   useEffect(() => {
     ws.onStatusChanged = (s: boolean) => setStatus(s);
-    ws.onMessageReceived = (torrent: unknown) => {
+    ws.onMessageReceived = ({ room, torrent }) => {
+      console.log("received message from room:", room);
+
       let speed = 0;
       const { name, bytesCompleted } = torrent;
       const newTorrents = { ...torrents };

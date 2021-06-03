@@ -37,8 +37,6 @@ class WebsocketHandler {
   }
 
   onMessage(e: MessageEvent): void {
-    // console.log("ws message", e);
-
     let { data } = e;
     if (typeof data === 'string') {
       data = JSON.parse(data)

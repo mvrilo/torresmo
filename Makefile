@@ -53,7 +53,7 @@ test:
 clean:
 	rm -rf torresmo torresmo-dev static/dist/bundle.js dist/* 2>/dev/null
 
-build: clean
+build: clean prepare
 	go run github.com/goreleaser/goreleaser build --rm-dist
 
 release: build

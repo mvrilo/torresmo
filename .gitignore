@@ -12,3 +12,4 @@ static/dist/*.js
 /dist/
 /downloads
 depaware.txt
+.env*

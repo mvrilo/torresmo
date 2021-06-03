@@ -58,5 +58,5 @@ build: clean
 
 release: build
 	git tag v$(VERSION)
-	git push origin v$(version)
+	git push origin v$(VERSION)
 	go run github.com/goreleaser/goreleaser release --rm-dist

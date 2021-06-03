@@ -31,3 +31,13 @@ release:
     owner: mvrilo
     name: torresmo
   draft: true
+brews:
+  - tap:
+      owner: mvrilo
+      name: homebrew-taps
+    folder: Formula
+    homepage: https://github.com/mvrilo/torresmo/
+    description: Experimental Torrent client and server
+    license: MIT
+    install: |-
+      bin.install "torresmo"

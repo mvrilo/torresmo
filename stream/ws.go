@@ -25,9 +25,10 @@ func (s *wsPublisher) addConn(room string, conn net.Conn) {
 	defer s.mu.Unlock()
 	if _, ok := s.rooms[room]; !ok {
 		s.rooms[room] = make(map[net.Conn]struct{})
-		s.rooms[room][conn] = struct{}{}
-		s.log.Info("ws: new connection on", room)
 	}
+
+	s.rooms[room][conn] = struct{}{}
+	s.log.Info("ws: new connection on", room)
 }
 
 func (s *wsPublisher) getRooms() (rooms []string) {

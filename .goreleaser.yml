@@ -1,6 +1,6 @@
 before:
   hooks:
-    - make prepare
+    - make clean prepare
 builds:
   - ldflags: "-s -w -X main.Commit={{.ShortCommit}} -X main.Version={{.Version}}"
     main: ./cmd/torresmo
@@ -39,5 +39,8 @@ brews:
     homepage: https://github.com/mvrilo/torresmo/
     description: Experimental Torrent client and server
     license: MIT
+    commit_author:
+      name: Murilo Santana
+      email: mvrilo@gmail.com
     install: |-
       bin.install "torresmo"

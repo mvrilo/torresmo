@@ -53,7 +53,7 @@ test:
 clean:
 	rm -rf torresmo torresmo-dev static/dist/bundle.js dist/* 2>/dev/null
 
-release: clean prepare
+release:
 	git tag v$(VERSION)
 	git push origin v$(VERSION)
 	go run github.com/goreleaser/goreleaser release --rm-dist

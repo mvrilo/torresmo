@@ -10,7 +10,7 @@ import { addTorrent, listTorrents } from "./api";
 import "terminal.css";
 
 const sizes = ['b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'];
-const WSURI = "ws://localhost:8000/api/events/?rooms=downloading,completed";
+const WSURI = "ws://localhost:8000/api/events/?rooms=downloading,completed,started";
 
 const ws = new WebsocketHandler(WSURI);
 

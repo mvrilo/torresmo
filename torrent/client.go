@@ -142,6 +142,7 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 
 		nt := newTorrent(t)
 		ch <- nt
+		c.stream.Publish("started", nt)
 
 		if c.biggestFirst {
 			BiggestFileFromTorrent(nt).Now()
@@ -152,12 +153,13 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 			<-ticker.C
 
 			nt = newTorrent(t)
-			c.stream.Publish("downloading", nt)
 
 			if nt.Completed() {
 				c.stream.Publish("completed", nt)
 				break
 			}
+
+			c.stream.Publish("downloading", nt)
 		}
 	}()
 	return ch

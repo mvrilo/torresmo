@@ -9,6 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Commit string
+var Version string
+
 func main() {
 	runtime.LockOSThread()
 
@@ -23,6 +26,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(serverCmd(torresm))
+	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -1,0 +1,32 @@
+before:
+  hooks:
+    - make prepare
+builds:
+  - ldflags: "-s -w -X main.Commit={{.ShortCommit}} -X main.Version={{.Version}}"
+    main: ./cmd/torresmo
+    goos:
+      - linux
+      - darwin
+      - windows
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .ShortCommit }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^Merge'
+      - typo
+archives:
+  - files:
+    - LICENSE
+    - README.md
+    format_overrides:
+      - goos: windows
+        format: zip
+release:
+  github:
+    owner: mvrilo
+    name: torresmo
+  draft: true

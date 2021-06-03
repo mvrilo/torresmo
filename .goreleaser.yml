@@ -18,6 +18,7 @@ changelog:
     exclude:
       - '^Merge'
       - typo
+      - cleanup
 archives:
   - files:
     - LICENSE

@@ -45,7 +45,7 @@ func (t *Torresmo) Shutdown(ctx context.Context, timeout time.Duration) error {
 // New initializes a Torresmo with some defaults
 func New() (*Torresmo, error) {
 	logger := log.NewLogger()
-	publisher := stream.Websocket(logger)
+	publisher := stream.NewWebsocket(logger)
 
 	staticFiles, err := fs.Sub(staticFiles, "static/dist")
 	if err != nil {

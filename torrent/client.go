@@ -151,12 +151,13 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 		for {
 			<-ticker.C
 
-			data, err := newTorrent(t).MarshalJSON()
-			if err != nil {
-				continue
-			}
+			nt = newTorrent(t)
+			c.stream.Publish("downloading", nt)
 
-			c.stream.Publish(data)
+			if nt.Completed() {
+				c.stream.Publish("completed", nt)
+				break
+			}
 		}
 	}()
 	return ch

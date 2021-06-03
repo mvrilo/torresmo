@@ -3,6 +3,6 @@ package stream
 import "net/http"
 
 type Publisher interface {
-	http.Handler
-	Publish(data []byte)
+	Serve() http.HandlerFunc
+	Publish(room string, data interface{})
 }

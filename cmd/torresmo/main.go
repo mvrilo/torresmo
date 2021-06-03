@@ -21,8 +21,9 @@ func main() {
 	}
 
 	rootCmd := &cobra.Command{
-		Use:   "torresmo",
-		Short: "Torresmo torrent client and server",
+		Use:     "torresmo",
+		Short:   "Torresmo torrent client and server",
+		Version: fmt.Sprintf("%s (%s)", Version, Commit),
 	}
 
 	rootCmd.AddCommand(serverCmd(torresm))

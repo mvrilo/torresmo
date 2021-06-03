@@ -10,7 +10,7 @@ Torresmo is a highly experimental and tasty torrent client built with Go.
 - single binary
 - mac app build
 - http server and rest api
-- websocket events
+- websocket events and rooms
 - embedded web interface (using esbuild, typescript and preact)
 - graphical interface (mac only for now, via macdriver)
 
@@ -46,6 +46,7 @@ Flags:
   -h, --help                 help for server
   -o, --out string           Output directory (default "downloads")
   -s, --seed                 Enable seeding (default true)
+  -e, --serve                Serve downloaded files (default true)
   -U, --upload-limit int     Upload limit
   -w, --watch string         Watch torrents in this directory (default "downloads")
 ```

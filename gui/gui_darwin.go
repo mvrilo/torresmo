@@ -87,13 +87,13 @@ func (g *guiMac) setup(n objc.Object) {
 			if torrents := tcli.Torrents(); len(torrents) > 0 {
 				var lines []string
 				for _, t := range torrents {
-					if t.Name() == "" {
+					if t == nil || t.Name() == "" {
 						continue
 					}
 
 					lines = append(lines, t.String())
 
-					if _, ok := completed[t.Name()]; t.Completed() && !ok {
+					if _, ok := completed[t.Name()]; !ok && t.Completed() {
 						completed[t.Name()] = struct{}{}
 						notifyCompleted(t.Name())
 					}
@@ -116,9 +116,9 @@ func (g *guiMac) setup(n objc.Object) {
 	itemQuit.SetTitle("Quit")
 	itemQuit.SetAction(objc.Sel("done:"))
 
-	cocoa.DefaultDelegateClass.AddMethod("newTorrent:", func(_ objc.Object) {
-		println("new torrent clicked")
-	})
+	// cocoa.DefaultDelegateClass.AddMethod("newTorrent:", func(_ objc.Object) {
+	// 	println("new torrent clicked")
+	// })
 
 	cocoa.DefaultDelegateClass.AddMethod("done:", func(_ objc.Object) {
 		log.Info("Shutting down Torresmo")
@@ -131,6 +131,7 @@ func (g *guiMac) setup(n objc.Object) {
 	menu := cocoa.NSMenu_New()
 	menu.AddItem(itemTorrents)
 	// menu.AddItem(itemNew)
+	menu.AddItem(cocoa.NSMenuItem_Separator())
 	menu.AddItem(itemQuit)
 	obj.SetMenu(menu)
 }

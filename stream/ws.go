@@ -21,14 +21,19 @@ type wsPublisher struct {
 }
 
 func (s *wsPublisher) addConn(room string, conn net.Conn) {
+	if room == "" {
+		return
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if _, ok := s.rooms[room]; !ok {
 		s.rooms[room] = make(map[net.Conn]struct{})
 	}
 
 	s.rooms[room][conn] = struct{}{}
-	s.log.Info("ws: new connection on", room)
+	s.log.Info("ws: new connection on room: ", room)
 }
 
 func (s *wsPublisher) getRooms() (rooms []string) {

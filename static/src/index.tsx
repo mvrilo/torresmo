@@ -90,7 +90,7 @@ const Torresmo = () => {
 
     document.body.addEventListener("paste", (e: ClipboardEvent) => {
       e.preventDefault();
-      console.log("paste", e);
+      // console.log("paste", e);
       const data = e.clipboardData.getData("text");
       if (data.indexOf("magnet:") === 0) {
         console.log("magnet detected, adding it:", data);
@@ -112,7 +112,7 @@ const Torresmo = () => {
 
         const file = item.getAsFile();
         // const torrent = parseTorrent(file);
-        console.log(file.name);
+        // console.log(file.name);
       }
     });
 

@@ -1,6 +1,6 @@
 .PHONY: all run dev debug mac web prepare clean test release
 
-COMMIT = $(shell git rev-list -1 HEAD)
+COMMIT = $(shell git rev-parse --short HEAD)
 VERSION = $(shell cat version)
 LDFLAGS = -X main.Commit=$(COMMIT) -X main.Version=$(VERSION)
 

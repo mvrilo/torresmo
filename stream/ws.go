@@ -36,15 +36,6 @@ func (s *wsPublisher) addConn(room string, conn net.Conn) {
 	s.log.Info("ws: new connection on room: ", room)
 }
 
-func (s *wsPublisher) getRooms() (rooms []string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for room := range s.rooms {
-		rooms = append(rooms, room)
-	}
-	return
-}
-
 func (s *wsPublisher) getRoomConns(room string) (conns []net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -65,23 +56,9 @@ func (s *wsPublisher) getConns() (conns []net.Conn) {
 	return
 }
 
-func (s *wsPublisher) closeRoomConn(room string, conn net.Conn) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for _, roomConns := range s.rooms {
-		if _, ok := roomConns[conn]; ok {
-			conn.Close()
-			delete(roomConns, conn)
-			s.log.Info("ws: closed connection on", room)
-		}
-	}
-	return
-}
-
 func (s *wsPublisher) handleConn(rooms []string, conn net.Conn) {
 	for _, room := range rooms {
 		s.addConn(room, conn)
-		// defer s.closeRoomConn(room, conn)
 	}
 
 	for {
@@ -127,7 +104,6 @@ func (s *wsPublisher) Broadcast(data []byte) {
 			continue
 		}
 	}
-	return
 }
 
 func (s *wsPublisher) Publish(room string, data interface{}) {
@@ -147,7 +123,6 @@ func (s *wsPublisher) Publish(room string, data interface{}) {
 			continue
 		}
 	}
-	return
 }
 
 // NewWebsocket returns a websocket implementation of Publisher

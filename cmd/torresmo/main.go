@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const serviceName = "_torresmo._tcp"
+const mdnsServiceName = "_torresmo._tcp"
 
 var Commit string
 var Version string

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/mvrilo/torresmo/gui"
 	"github.com/mvrilo/torresmo/http"
 	"github.com/mvrilo/torresmo/log"
-	"github.com/rs/xid"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 		Short: "Torresmo torrent client and server",
 		Run: func(cmd *cobra.Command, args []string) {
 			if addr == "" {
-				println("server Address is required")
+				log.Error("Missing server address")
 				os.Exit(1)
 			}
 
@@ -83,12 +83,14 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 			err := cli.Start()
 			if err != nil {
 				log.Error("Error starting Torrent client:", err)
+				os.Exit(1)
 			}
 
 			if watchDir != "" {
 				err := cli.ReadTorrentFiles()
 				if err != nil {
-					panic(err)
+					log.Error("Error reading torrent files:", err)
+					os.Exit(1)
 				}
 			}
 
@@ -97,13 +99,17 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				_, port, _ := net.SplitHostPort(addr)
 				iport, _ := strconv.Atoi(port)
 
-				id := xid.New().String()
-				service, _ := mdns.NewMDNSService(id, "_torresmo._tcp", "", "", iport, nil, []string{})
+				host, _ := os.Hostname()
+				host = strings.Replace(host, ".local", "", -1)
+				service, _ := mdns.NewMDNSService(host, mdnsServiceName, "", "", iport, nil, []string{})
+
+				log.Info("Starting mDNS server as: ", host+"."+mdnsServiceName+".local")
 				mdnsServer, err = mdns.NewServer(&mdns.Config{Zone: service})
 				if err != nil {
 					log.Error("Error starting mdns server:", err)
+				} else {
+					defer mdnsServer.Shutdown()
 				}
-				defer mdnsServer.Shutdown()
 			}
 
 			if guiFlag && gui.App != nil {
@@ -128,7 +134,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&serve, "serve", "e", true, "Serve downloaded files")
 	srvCmd.Flags().BoolVarP(&biggestFirst, "biggest", "b", true, "Prioritize the biggest file in the torrent")
-	srvCmd.Flags().BoolVarP(&enableDiscovery, "discovery", "c", true, "Enable mdns discovery")
+	srvCmd.Flags().BoolVarP(&enableDiscovery, "discovery", "c", true, "Enable mDNS discovery")
 	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
 	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")
 	srvCmd.Flags().IntVarP(&downloadLimit, "download-limit", "D", 0, "Download limit")

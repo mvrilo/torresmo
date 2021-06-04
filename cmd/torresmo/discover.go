@@ -19,12 +19,12 @@ func discoverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 		Short: "Discover Torresmo servers in the network",
 		Run: func(cmd *cobra.Command, args []string) {
 			entriesCh := make(chan *mdns.ServiceEntry, 4)
+
 			go func() {
 				for entry := range entriesCh {
-					if !strings.ContainsAny(entry.Name, serviceName) {
+					if !strings.ContainsAny(entry.Name, mdnsServiceName) {
 						continue
 					}
-
 					fmt.Printf("%s:%d %s (%s)", entry.AddrV4, entry.Port, entry.Name, entry.AddrV6)
 					if entry.Info != "" {
 						fmt.Printf(" %s", entry.Info)
@@ -33,7 +33,7 @@ func discoverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				}
 			}()
 
-			mdns.Lookup(serviceName, entriesCh)
+			mdns.Lookup(mdnsServiceName, entriesCh)
 			close(entriesCh)
 		},
 	}

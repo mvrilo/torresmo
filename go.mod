@@ -18,7 +18,6 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/progrium/macdriver v0.1.1-0.20210414011620-a7cd2cb0d1ba
-	github.com/rs/xid v1.3.0
 	github.com/spf13/cobra v1.1.3
 	github.com/ugorji/go v1.2.4 // indirect
 	go.uber.org/zap v1.16.0

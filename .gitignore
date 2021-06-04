@@ -2,7 +2,7 @@
 tmp
 macapp
 /torresmo
-/torresmo{-debug,-dev}
+/torresmo-*
 *.db
 static/*.log
 static/node_modules

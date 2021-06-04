@@ -15,6 +15,7 @@ import (
 	"github.com/mvrilo/torresmo/http"
 	"github.com/mvrilo/torresmo/log"
 	"github.com/mvrilo/torresmo/mdns"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +27,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	var guiFlag bool
 	var seedFlag bool
 	var serve bool
+	var openp bool
 	var biggestFirst bool
 	var uploadLimit int
 	var downloadLimit int
@@ -103,6 +105,13 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				defer mdnsServer.Shutdown()
 			}
 
+			if openp {
+				if addr[0] == ':' {
+					addr = "127.0.0.1" + addr
+				}
+				open.Run(fmt.Sprintf("http://%s", addr))
+			}
+
 			if guiFlag && gui.App != nil {
 				gui.App.Register(torresm)
 				gui.App.Start()
@@ -119,16 +128,17 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 		},
 	}
 
-	srvCmd.Flags().StringVarP(&out, "out", "o", "downloads", "Output directory")
-	srvCmd.Flags().BoolVarP(&guiFlag, "gui", "g", true, "Runs graphical interface")
-	srvCmd.Flags().BoolVarP(&seedFlag, "seed", "s", true, "Enable seeding")
-	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
-	srvCmd.Flags().BoolVarP(&serve, "serve", "e", true, "Serve downloaded files")
 	srvCmd.Flags().BoolVarP(&biggestFirst, "biggest", "b", true, "Prioritize the biggest file in the torrent")
+	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&enableDiscovery, "discovery", "c", true, "Enable mDNS discovery")
-	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
-	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")
+	srvCmd.Flags().BoolVarP(&guiFlag, "gui", "g", true, "Runs graphical interface")
+	srvCmd.Flags().BoolVarP(&openp, "open", "p", false, "Open service address in the browser")
+	srvCmd.Flags().BoolVarP(&seedFlag, "seed", "s", true, "Enable seeding")
+	srvCmd.Flags().BoolVarP(&serve, "serve", "e", true, "Serve downloaded files")
 	srvCmd.Flags().IntVarP(&downloadLimit, "download-limit", "D", 0, "Download limit")
+	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")
 	srvCmd.Flags().StringVarP(&addr, "addr", "a", ":8000", "HTTP Server address")
+	srvCmd.Flags().StringVarP(&out, "out", "o", "downloads", "Output directory")
+	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
 	return srvCmd
 }

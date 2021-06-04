@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/DeanThompson/ginpprof"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/mvrilo/torresmo/errors"
 	"github.com/mvrilo/torresmo/log"
@@ -118,6 +119,7 @@ func NewHandler(cli torrent.Client, logger log.Logger, staticFiles fs.FS, downlo
 		ginpprof.Wrap(router)
 	}
 
+	router.Use(cors.Default())
 	router.Use(h.loggingMiddleware)
 	router.Use(h.errorHandlingMiddleware)
 	if downloadedFiles != nil {

@@ -9,8 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const mdnsServiceName = "_torresmo._tcp"
-
 var Commit string
 var Version string
 var FullVersion = fmt.Sprintf("%s (%s)", Version, Commit)

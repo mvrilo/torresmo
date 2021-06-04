@@ -17,6 +17,7 @@ require (
 	github.com/hashicorp/mdns v1.0.4
 	github.com/json-iterator/go v1.1.10
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/progrium/macdriver v0.1.1-0.20210414011620-a7cd2cb0d1ba
 	github.com/spf13/cobra v1.1.3
 	github.com/ugorji/go v1.2.4 // indirect

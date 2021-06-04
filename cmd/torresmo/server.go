@@ -4,20 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"net"
 	gohttp "net/http"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
-	"github.com/hashicorp/mdns"
 	"github.com/mvrilo/torresmo"
 	"github.com/mvrilo/torresmo/gui"
 	"github.com/mvrilo/torresmo/http"
 	"github.com/mvrilo/torresmo/log"
+	"github.com/mvrilo/torresmo/mdns"
 	"github.com/spf13/cobra"
 )
 
@@ -94,22 +91,16 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				}
 			}
 
-			var mdnsServer *mdns.Server
 			if enableDiscovery {
-				_, port, _ := net.SplitHostPort(addr)
-				iport, _ := strconv.Atoi(port)
-
-				host, _ := os.Hostname()
-				host = strings.Replace(host, ".local", "", -1)
-				service, _ := mdns.NewMDNSService(host, mdnsServiceName, "", "", iport, nil, []string{})
-
-				log.Info("Starting mDNS server as: ", host+"."+mdnsServiceName+".local")
-				mdnsServer, err = mdns.NewServer(&mdns.Config{Zone: service})
+				_, fullhost := mdns.Hostname()
+				log.Info("Starting mDNS server with service name: ", fullhost)
+				mdnsServer, err := mdns.NewServer(addr)
 				if err != nil {
-					log.Error("Error starting mdns server:", err)
-				} else {
-					defer mdnsServer.Shutdown()
+					log.Error("Error starting mDNS server:", err)
+					os.Exit(1)
 				}
+
+				defer mdnsServer.Shutdown()
 			}
 
 			if guiFlag && gui.App != nil {

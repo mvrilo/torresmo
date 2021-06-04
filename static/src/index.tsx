@@ -10,7 +10,7 @@ import { addTorrent, listTorrents } from "./api";
 import "terminal.css";
 
 const sizes = ['b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'];
-const WSURI = "ws://localhost:8000/api/events/?rooms=downloading,completed,started";
+const WSURI = "ws://localhost:8000/api/events/";
 
 const ws = new WebsocketHandler(WSURI);
 
@@ -110,7 +110,7 @@ const Torresmo = () => {
           continue;
         }
 
-        const file = item.getAsFile();
+        // const file = item.getAsFile();
         // const torrent = parseTorrent(file);
         // console.log(file.name);
       }
@@ -130,16 +130,20 @@ const Torresmo = () => {
 
   useEffect(() => {
     ws.onStatusChanged = (s: boolean) => setStatus(s);
-    ws.onMessageReceived = ({ room, torrent }) => {
-      console.log("received message from room:", room);
+    ws.onMessageReceived = ({ topic, data }) => {
+      console.log("received message from topic:", topic, data);
+
+      if (topic === "online") {
+        return;
+      }
 
       let speed = 0;
-      const { name, bytesCompleted } = torrent;
+      const { name, bytesCompleted } = data;
       const newTorrents = { ...torrents };
       if (bytesCompleted && newTorrents[name] && newTorrents[name].bytesCompleted) {
         speed = bytesCompleted - newTorrents[name].bytesCompleted;
       }
-      newTorrents[name] = { ...torrent, speed };
+      newTorrents[name] = { ...data, speed };
       setTorrents({ ...newTorrents });
       setStatus(true);
     };

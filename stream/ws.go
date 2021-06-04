@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/gobwas/ws"
@@ -15,57 +14,58 @@ import (
 )
 
 type wsPublisher struct {
-	rooms map[string]map[net.Conn]struct{}
-	mu    *sync.Mutex
-	log   log.Logger
+	topics map[fmt.Stringer]map[net.Conn]struct{}
+	mu     *sync.Mutex
+	log    log.Logger
 }
 
-func (s *wsPublisher) addConn(room string, conn net.Conn) {
-	if room == "" {
-		return
-	}
+var _ Publisher = (*wsPublisher)(nil)
 
+func (s *wsPublisher) removeConn(topic Topic, conn net.Conn) {
+	s.mu.Lock()
+	delete(s.topics[topic], conn)
+	s.mu.Unlock()
+}
+
+func (s *wsPublisher) addConn(topic Topic, conn net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.rooms[room]; !ok {
-		s.rooms[room] = make(map[net.Conn]struct{})
+	if _, ok := s.topics[topic]; !ok {
+		s.topics[topic] = make(map[net.Conn]struct{})
 	}
 
-	s.rooms[room][conn] = struct{}{}
-	s.log.Info("ws: new connection on room: ", room)
+	s.topics[topic][conn] = struct{}{}
+	s.log.Info("ws: new connection on topic: ", topic)
 }
 
-func (s *wsPublisher) getRoomConns(room string) (conns []net.Conn) {
+func (s *wsPublisher) getTopicConns(topic Topic) (conns []net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for roomConn := range s.rooms[room] {
-		conns = append(conns, roomConn)
+	for topicConn := range s.topics[topic] {
+		conns = append(conns, topicConn)
 	}
 	return
 }
 
-func (s *wsPublisher) getConns() (conns []net.Conn) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for _, roomConns := range s.rooms {
-		for conn := range roomConns {
-			conns = append(conns, conn)
-		}
-	}
-	return
-}
-
-func (s *wsPublisher) handleConn(rooms []string, conn net.Conn) {
-	for _, room := range rooms {
-		s.addConn(room, conn)
+func (s *wsPublisher) handleConn(topics []Topic, conn net.Conn) {
+	for _, topic := range topics {
+		s.addConn(topic, conn)
+		s.Publish(TopicOnline, len(s.getTopicConns(topic)))
 	}
 
 	for {
 		msg, op, err := wsutil.ReadClientData(conn)
-		if err != nil && err != io.EOF {
-			// s.log.Error("websocket error:", errors.Wrap(err, "websocket read"))
+		if err != nil && err == io.EOF {
 			continue
+		}
+
+		if err != nil {
+			for _, topic := range topics {
+				s.removeConn(topic, conn)
+			}
+			conn.Close()
+			break
 		}
 
 		if op == ws.OpContinuation {
@@ -76,16 +76,9 @@ func (s *wsPublisher) handleConn(rooms []string, conn net.Conn) {
 	}
 }
 
+// Serve retrns a http.HandlerFunc
 func (s *wsPublisher) Serve() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqRooms := r.URL.Query().Get("rooms")
-		rooms := strings.Split(reqRooms, ",")
-		if len(rooms) < 1 {
-			w.WriteHeader(400)
-			w.Write([]byte(`{ "error": "missing \"rooms\" parameter" }`))
-			return
-		}
-
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
 			w.WriteHeader(500)
@@ -93,31 +86,23 @@ func (s *wsPublisher) Serve() http.HandlerFunc {
 			return
 		}
 
-		go s.handleConn(rooms, conn)
+		go s.handleConn(AllTopics, conn)
 	}
 }
 
-func (s *wsPublisher) Broadcast(data []byte) {
-	for _, conn := range s.getConns() {
-		err := wsutil.WriteServerMessage(conn, ws.OpText, data)
-		if err != nil {
-			continue
-		}
-	}
-}
-
-func (s *wsPublisher) Publish(room string, data interface{}) {
+// Publish sends data to a topic
+func (s *wsPublisher) Publish(topic Topic, data interface{}) {
 	reply, err := json.Marshal(struct {
-		Room    string      `json:"room"`
-		Torrent interface{} `json:"torrent"`
+		Topic string      `json:"topic"`
+		Data  interface{} `json:"data"`
 	}{
-		room, data,
+		topic.String(), data,
 	})
 	if err != nil {
 		return
 	}
 
-	for _, conn := range s.getRoomConns(room) {
+	for _, conn := range s.getTopicConns(topic) {
 		err := wsutil.WriteServerMessage(conn, ws.OpText, reply)
 		if err != nil {
 			continue
@@ -128,8 +113,8 @@ func (s *wsPublisher) Publish(room string, data interface{}) {
 // NewWebsocket returns a websocket implementation of Publisher
 func NewWebsocket(log log.Logger) Publisher {
 	return &wsPublisher{
-		rooms: make(map[string]map[net.Conn]struct{}),
-		log:   log,
-		mu:    new(sync.Mutex),
+		topics: make(map[fmt.Stringer]map[net.Conn]struct{}),
+		log:    log,
+		mu:     new(sync.Mutex),
 	}
 }

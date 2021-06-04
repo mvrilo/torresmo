@@ -9,7 +9,7 @@ var _ Publisher = discard{}
 func (discard) Serve() http.HandlerFunc {
 	return nil
 }
-func (discard) Publish(string, interface{}) {}
+func (discard) Publish(Topic, interface{}) {}
 
 func Discard() Publisher {
 	return discard{}

@@ -4,5 +4,5 @@ import "net/http"
 
 type Publisher interface {
 	Serve() http.HandlerFunc
-	Publish(room string, data interface{})
+	Publish(topic Topic, data interface{})
 }

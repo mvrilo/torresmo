@@ -142,7 +142,7 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 
 		nt := newTorrent(t)
 		ch <- nt
-		c.stream.Publish("started", nt)
+		c.stream.Publish(stream.TopicStarted, nt)
 
 		if c.biggestFirst {
 			BiggestFileFromTorrent(nt).Now()
@@ -155,11 +155,11 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 			nt = newTorrent(t)
 
 			if nt.Completed() {
-				c.stream.Publish("completed", nt)
+				c.stream.Publish(stream.TopicCompleted, nt)
 				break
 			}
 
-			c.stream.Publish("downloading", nt)
+			c.stream.Publish(stream.TopicDownloading, nt)
 		}
 	}()
 	return ch

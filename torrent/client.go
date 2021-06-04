@@ -103,7 +103,7 @@ func (c *client) WithSeed(seed bool) Client {
 
 func (c *client) WithOutput(output string) Client {
 	c.conf.DataDir = output
-	c.conf.DefaultStorage = storage.NewMMap(output)
+	c.conf.DefaultStorage = storage.NewMMapWithCompletion(output, storage.NewMapPieceCompletion())
 	return c
 }
 

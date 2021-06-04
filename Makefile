@@ -6,7 +6,7 @@ LDFLAGS = -X main.Commit=$(COMMIT) -X main.Version=$(VERSION)
 
 all: torresmo
 
-torresmo:
+torresmo: prepare static/dist/bundle.js
 	time go build -ldflags="-s -w $(LDFLAGS)" -o torresmo cmd/torresmo/*.go
 
 torresmo-dev: prepare

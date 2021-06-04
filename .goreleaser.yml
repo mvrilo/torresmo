@@ -23,6 +23,7 @@ archives:
   - files:
     - LICENSE
     - README.md
+    - VERSION
     format_overrides:
       - goos: windows
         format: zip

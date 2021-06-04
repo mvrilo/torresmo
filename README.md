@@ -7,24 +7,26 @@ Torresmo is an experimental Torrent client and server built with Go.
 
 ## Features
 
-- single binary
-- http server and rest api
-- websocket events and rooms
-- embedded web interface (using esbuild, typescript and preact)
-- graphical interface (mac only for now, via macdriver)
-- mdns discovery mechanism
+- Easy to deploy, single binary
+- Bultin HTTP server
+- Websocket support
+- Embedded web interface (using esbuild, TypeScript and Preact)
+- Graphical interface (Mac only for now, using [macdriver](https://github.com/progrium/macdriver))
+- mDNS discovery mechanism
+
+![demo](demo.png)
 
 ## Build
 
-Go binary:
+Requirements:
+
+- Go 1.16
 
 ```
 make torresmo
 ```
 
 ## Usage
-
-Torresmo
 
 ```
 Torresmo torrent client and server
@@ -55,7 +57,7 @@ Flags:
   -a, --addr string          HTTP Server address (default ":8000")
   -b, --biggest              Prioritize the biggest file in the torrent (default true)
   -d, --debug                Enable seeding (default true)
-  -c, --discovery            Enable mdns discovery (default true)
+  -c, --discovery            Enable mDNS discovery (default true)
   -D, --download-limit int   Download limit
   -g, --gui                  Runs graphical interface (default true)
   -h, --help                 help for server
@@ -66,6 +68,6 @@ Flags:
   -w, --watch string         Watch torrents in this directory (default "downloads")
 ```
 
-## Example
+## License
 
-![Example](demo.png)
+MIT

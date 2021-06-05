@@ -1,0 +1,49 @@
+before:
+  hooks:
+    - make clean prepare
+builds:
+  - ldflags: "-s -w -X main.Commit={{.ShortCommit}} -X main.Version={{.Version}}"
+    main: ./cmd/torresmo
+    goos:
+      - linux
+      - darwin
+      - windows
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .ShortCommit }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^Merge'
+      - typo
+      - cleanup
+archives:
+  - files:
+    - LICENSE
+    - README.md
+    - VERSION
+    format_overrides:
+      - goos: windows
+        format: zip
+release:
+  github:
+    owner: mvrilo
+    name: torresmo
+  draft: true
+brews:
+  - tap:
+      owner: mvrilo
+      name: homebrew-taps
+    folder: Formula
+    homepage: https://github.com/mvrilo/torresmo/
+    description: Experimental torrent client and server
+    license: MIT
+    commit_author:
+      name: Murilo Santana
+      email: mvrilo@gmail.com
+    install: |-
+      bin.install "torresmo"
+    test: |
+      system "#{bin}/torresmo -v"

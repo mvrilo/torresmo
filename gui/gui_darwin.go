@@ -30,6 +30,18 @@ type GuiMac struct {
 	app cocoa.NSApplication
 }
 
+type NSUserNotification struct {
+	objc.Object
+}
+
+var NSUserNotification_ = objc.Get("NSUserNotification")
+
+type NSUserNotificationCenter struct {
+	objc.Object
+}
+
+var NSUserNotificationCenter_ = objc.Get("NSUserNotificationCenter")
+
 var _ GUI = (*GuiMac)(nil)
 
 func (g *GuiMac) Register(torresm *torresm.Torresmo) {
@@ -42,11 +54,27 @@ func (g *GuiMac) Register(torresm *torresm.Torresmo) {
 	url := core.URL(fmt.Sprintf("http://%s", g.t.HTTPServer.Addr))
 	req := core.NSURLRequest_Init(url)
 
+	nsbundle := cocoa.NSBundle_Main().Class()
+	nsbundle.AddMethod("__bundleIdentifier", func(_ objc.Object) objc.Object {
+		return core.String("co.murilo.torresmo")
+	})
+	nsbundle.Swizzle("bundleIdentifier", "__bundleIdentifier")
+
 	g.app = cocoa.NSApp_WithDidLaunch(func(n objc.Object) {
 		g.setup(n, req, config)
 	})
 
 	log.Info("Darwin GUI Started")
+}
+
+func notifyCompleted(value string) {
+	notification := NSUserNotification{NSUserNotification_.Alloc().Init()}
+	notification.Set("title:", core.String("Torrent Downloaded"))
+	notification.Set("informativeText:", core.String(value))
+
+	center := NSUserNotificationCenter{NSUserNotificationCenter_.Send("defaultUserNotificationCenter")}
+	center.Send("deliverNotification:", notification)
+	notification.Release()
 }
 
 func (g *GuiMac) setup(n objc.Object, req core.NSURLRequest, config webkit.WKWebViewConfiguration) {
@@ -98,12 +126,30 @@ func (g *GuiMac) setup(n objc.Object, req core.NSURLRequest, config webkit.WKWeb
 
 	tcli := g.t.TorrentClient
 	go func() {
+		completed := make(map[string]struct{})
+		for _, t := range tcli.Torrents() {
+			if !t.Completed() {
+				continue
+			}
+			completed[t.Name()] = struct{}{}
+		}
+
 		for {
 			if torrents := tcli.Torrents(); len(torrents) > 0 {
 				var lines []string
 				for _, t := range torrents {
+					if t == nil || t.Name() == "" {
+						continue
+					}
+
 					lines = append(lines, t.String())
+
+					if _, ok := completed[t.Name()]; !ok && t.Completed() {
+						completed[t.Name()] = struct{}{}
+						notifyCompleted(t.Name())
+					}
 				}
+
 				sort.Strings(lines)
 				core.Dispatch(func() {
 					itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
@@ -121,9 +167,9 @@ func (g *GuiMac) setup(n objc.Object, req core.NSURLRequest, config webkit.WKWeb
 	itemQuit.SetTitle("Quit")
 	itemQuit.SetAction(objc.Sel("done:"))
 
-	cocoa.DefaultDelegateClass.AddMethod("newTorrent:", func(_ objc.Object) {
-		println("new torrent clicked")
-	})
+	// cocoa.DefaultDelegateClass.AddMethod("newTorrent:", func(_ objc.Object) {
+	// 	println("new torrent clicked")
+	// })
 
 	cocoa.DefaultDelegateClass.AddMethod("done:", func(_ objc.Object) {
 		log.Info("Shutting down Torresmo")
@@ -136,6 +182,8 @@ func (g *GuiMac) setup(n objc.Object, req core.NSURLRequest, config webkit.WKWeb
 	menu := cocoa.NSMenu_New()
 	menu.AddItem(openWindow)
 	menu.AddItem(itemTorrents)
+	// menu.AddItem(itemNew)
+	menu.AddItem(cocoa.NSMenuItem_Separator())
 	menu.AddItem(itemQuit)
 	obj.SetMenu(menu)
 }

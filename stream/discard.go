@@ -6,9 +6,10 @@ type discard struct{}
 
 var _ Publisher = discard{}
 
-func (discard) Publish([]byte) {}
-
-func (discard) ServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (discard) Serve() http.HandlerFunc {
+	return nil
+}
+func (discard) Publish(Topic, interface{}) {}
 
 func Discard() Publisher {
 	return discard{}

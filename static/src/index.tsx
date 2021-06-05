@@ -4,7 +4,6 @@ import { useState, useEffect } from "preact/hooks";
 
 import styles from "./styles";
 import WebsocketHandler from "./ws";
-// import parseTorrent from "parse-torrent";
 import { addTorrent, listTorrents } from "./api";
 
 import "terminal.css";
@@ -61,33 +60,36 @@ const List = ({ torrents, header }) => {
   return list;
 };
 
-const Header = ({ connected }) => {
+const Header = ({ connected, onlineCount }) => {
   const color = connected ? "lightgreen" : "red";
   const status = connected ? "connected" : "disconnected";
+  const count = onlineCount < 1 ? "" : `(${onlineCount})`;
   return (
     <nav>
       <h1>
         Torresmo 
-        <small style={{color}}> {status} </small>
+        <small style={{color}}> {status} {count}</small>
       </h1>
       <p style={styles.info}>paste a magnet uri to start downloading</p>
     </nav>
   );
 };
 
+const filterTorrents = (torrents = [], completed = false) =>
+  Object.keys(torrents).filter((torrent) =>
+    torrents[torrent].completed === completed).map((torrent) =>
+      torrents[torrent]);
+
 const Torresmo = () => {
   const [ready, setReady] = useState(false);
   const [status, setStatus] = useState(false);
   const [torrents, setTorrents] = useState({});
+  const [onlineCount, setOnlineCount] = useState(0);
 
   useEffect(() => {
-    if (ready) {
-      return;
-    }
-
+    console.log("- ready", ready);
     document.body.addEventListener("paste", (e: ClipboardEvent) => {
       e.preventDefault();
-      console.log("paste", e);
       const data = e.clipboardData.getData("text");
       if (data.indexOf("magnet:") === 0) {
         console.log("magnet detected, adding it:", data);
@@ -107,44 +109,49 @@ const Torresmo = () => {
           continue;
         }
 
-        const file = item.getAsFile();
-        // const torrent = parseTorrent(file);
-        console.log(file.name);
+        // const file = item.getAsFile();
       }
     });
 
     (async () => {
-      main.style.opacity = 1;
       const ts = { ...torrents };
       const res = await listTorrents();
       if (res && Object.keys(res).length > 0) {
         res.forEach((t) => { ts[t.name] = { ...t }; });
         setTorrents(ts);
       }
+      main.style.opacity = 1;
       setReady(true);
     })();
   }, [ready]);
 
   useEffect(() => {
     ws.onStatusChanged = (s: boolean) => setStatus(s);
-    ws.onMessageReceived = (torrent: unknown) => {
+    ws.onMessageReceived = ({ topic, data }) => {
+      console.log("received message from topic:", topic, data);
+      setStatus(true);
+
+      if (topic === "online") {
+        setOnlineCount(data);
+        return;
+      }
+
       let speed = 0;
-      const { name, bytesCompleted } = torrent;
+      const { name, bytesCompleted } = data;
       const newTorrents = { ...torrents };
       if (bytesCompleted && newTorrents[name] && newTorrents[name].bytesCompleted) {
         speed = bytesCompleted - newTorrents[name].bytesCompleted;
       }
-      newTorrents[name] = { ...torrent, speed };
+      newTorrents[name] = { ...data, speed };
       setTorrents({ ...newTorrents });
-      setStatus(true);
     };
-  }, [torrents, status]);
+  }, [torrents, onlineCount, status]);
 
   return (
     <div>
-      <Header connected={status} />
-      <List header="Downloading" torrents={Object.keys(torrents).filter((torrent) => !torrents[torrent].bytesCompleted).map((torrent) => torrents[torrent])} />
-      <List header="Completed" torrents={Object.keys(torrents).filter((torrent) => torrents[torrent].bytesCompleted).map((torrent) => torrents[torrent])} />
+      <Header connected={status} onlineCount={onlineCount} />
+      <List header="Downloading" torrents={filterTorrents(torrents, false)} />
+      <List header="Completed" torrents={filterTorrents(torrents, true)} />
     </div>
   );
 };

@@ -39,6 +39,7 @@ type ClientBuilder interface {
 	WithPublisher(pub stream.Publisher) Client
 	WithDownloadLimit(limit int) Client
 	WithUploadLimit(limit int) Client
+	WithTorrentFiles(dir string) Client
 	WithWatchDir(dir string) Client
 	WithBiggestFirst(b bool) Client
 }
@@ -65,6 +66,7 @@ type client struct {
 
 	mu           sync.Mutex
 	watchDir     string
+	dumpDir      string
 	biggestFirst bool
 }
 
@@ -103,7 +105,12 @@ func (c *client) WithSeed(seed bool) Client {
 
 func (c *client) WithOutput(output string) Client {
 	c.conf.DataDir = output
-	c.conf.DefaultStorage = storage.NewMMap(output)
+	c.conf.DefaultStorage = storage.NewMMapWithCompletion(output, storage.NewMapPieceCompletion())
+	return c
+}
+
+func (c *client) WithTorrentFiles(dir string) Client {
+	c.dumpDir = dir
 	return c
 }
 
@@ -142,6 +149,7 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 
 		nt := newTorrent(t)
 		ch <- nt
+		c.stream.Publish(stream.TopicStarted, nt)
 
 		if c.biggestFirst {
 			BiggestFileFromTorrent(nt).Now()
@@ -151,23 +159,27 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 		for {
 			<-ticker.C
 
-			data, err := newTorrent(t).MarshalJSON()
-			if err != nil {
-				continue
+			nt = newTorrent(t)
+
+			if nt.Completed() {
+				c.stream.Publish(stream.TopicCompleted, nt)
+				break
 			}
 
-			c.stream.Publish(data)
+			c.stream.Publish(stream.TopicDownloading, nt)
 		}
 	}()
 	return ch
 }
 
-func (c *client) getTorrentFilesFilename() []string {
-	files, err := filepath.Glob(c.watchDir + "/*.torrent")
-	if err != nil {
-		return nil
+func (c *client) getTorrentFilesFilename() (filenames []string) {
+	if c.watchDir != "" {
+		files, err := filepath.Glob(c.watchDir + "/*.torrent")
+		if err == nil {
+			filenames = append(filenames, files...)
+		}
 	}
-	return files
+	return
 }
 
 func (c *client) ReadTorrentFiles() error {
@@ -189,12 +201,12 @@ func (c *client) ReadTorrentFiles() error {
 }
 
 func (c *client) writeTorrentFile(t *torren.Torrent) error {
-	err := os.MkdirAll(c.conf.DataDir, 0750)
+	err := os.MkdirAll(c.dumpDir, 0750)
 	if err != nil {
 		return err
 	}
 
-	path := filepath.Join(c.conf.DataDir, t.InfoHash().HexString()+".torrent")
+	path := filepath.Join(c.dumpDir, t.Name()+".torrent")
 	_, err = os.Stat(path)
 	if err != nil && !os.IsNotExist(err) {
 		return err

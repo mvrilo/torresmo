@@ -29,14 +29,14 @@ var _ File = (*file)(nil)
 
 type file struct {
 	*torren.File
-	mu  *sync.Mutex
+	mu  sync.Mutex
 	pri byte
 }
 
 func newFile(tf *torren.File) (f *file) {
 	f = &file{
 		File: tf,
-		mu:   new(sync.Mutex),
+		mu:   sync.Mutex{},
 		pri:  0,
 	}
 

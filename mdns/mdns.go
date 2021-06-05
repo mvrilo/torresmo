@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/hashicorp/mdns"
 )
@@ -17,10 +18,15 @@ func init() {
 }
 
 // SearchServices does a mdns lookup for torresmo services
-func SearchServices() (entries []string) {
+func SearchServices() []string {
+	var entries []string
 	entriesCh := make(chan *mdns.ServiceEntry, 4)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
+		defer wg.Done()
 		for entry := range entriesCh {
 			if !strings.ContainsAny(entry.Name, ServiceName) {
 				continue
@@ -37,7 +43,12 @@ func SearchServices() (entries []string) {
 		}
 	}()
 
-	mdns.Lookup(ServiceName, entriesCh)
+	err := mdns.Lookup(ServiceName, entriesCh)
+	if err != nil {
+		return nil
+	}
 	close(entriesCh)
-	return
+
+	wg.Wait()
+	return entries
 }

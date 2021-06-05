@@ -14,6 +14,7 @@ import (
 )
 
 type wsPublisher struct {
+	online uint
 	topics map[fmt.Stringer]map[net.Conn]struct{}
 	mu     *sync.Mutex
 	log    log.Logger
@@ -51,8 +52,9 @@ func (s *wsPublisher) getTopicConns(topic Topic) (conns []net.Conn) {
 func (s *wsPublisher) handleConn(topics []Topic, conn net.Conn) {
 	for _, topic := range topics {
 		s.addConn(topic, conn)
-		s.Publish(TopicOnline, len(s.getTopicConns(topic)))
 	}
+	s.online++
+	s.Publish(TopicOnline, s.online)
 
 	for {
 		msg, op, err := wsutil.ReadClientData(conn)
@@ -64,6 +66,8 @@ func (s *wsPublisher) handleConn(topics []Topic, conn net.Conn) {
 			for _, topic := range topics {
 				s.removeConn(topic, conn)
 			}
+			s.online--
+			s.Publish(TopicOnline, s.online)
 			conn.Close()
 			break
 		}

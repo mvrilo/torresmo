@@ -22,7 +22,8 @@ import (
 func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	var out string
 	var addr string
-	var watchDir string
+	var torrentFiles string
+	var watchTorrents string
 	var debug bool
 	var guiFlag bool
 	var seedFlag bool
@@ -76,7 +77,8 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				WithDownloadLimit(downloadLimit).
 				WithUploadLimit(uploadLimit).
 				WithSeed(seedFlag).
-				WithWatchDir(watchDir).
+				WithTorrentFiles(torrentFiles).
+				WithWatchDir(watchTorrents).
 				WithBiggestFirst(biggestFirst)
 
 			err := cli.Start()
@@ -85,7 +87,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				os.Exit(1)
 			}
 
-			if watchDir != "" {
+			if torrentFiles != "" {
 				err := cli.ReadTorrentFiles()
 				if err != nil {
 					log.Error("Error reading torrent files:", err)
@@ -139,6 +141,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	srvCmd.Flags().IntVarP(&uploadLimit, "upload-limit", "U", 0, "Upload limit")
 	srvCmd.Flags().StringVarP(&addr, "addr", "a", ":8000", "HTTP Server address")
 	srvCmd.Flags().StringVarP(&out, "out", "o", "downloads", "Output directory")
-	srvCmd.Flags().StringVarP(&watchDir, "watch", "w", "downloads", "Watch torrents in this directory")
+	srvCmd.Flags().StringVarP(&torrentFiles, "torrent-files", "t", "downloads/.torrents", "Directory to dump torrent files")
+	srvCmd.Flags().StringVarP(&watchTorrents, "watch-torrents", "w", "downloads/.torrents", "Directory for new torrents, once added it will start download")
 	return srvCmd
 }

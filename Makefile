@@ -6,7 +6,7 @@ LDFLAGS = -X main.Commit=$(COMMIT) -X main.Version=$(VERSION)
 
 all: torresmo
 
-torresmo: prepare web
+torresmo: static/dist/bundle.js
 	time go build -ldflags="-s -w $(LDFLAGS)" -o torresmo cmd/torresmo/*.go
 
 torresmo-dev: prepare web
@@ -16,10 +16,10 @@ run: torresmo
 	./torresmo server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=9000
 
 dev: torresmo-dev
-	./torresmo-dev server --open --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=90
+	./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=90
 
 debug: torresmo-dev
-	./torresmo-dev server --open --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=500000
+	./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=500000
 
 macapp:
 	go build -o macapp ./tools/macapp/main.go

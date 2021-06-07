@@ -83,7 +83,7 @@ func notifyCompleted(value string) {
 	notification.Release()
 }
 
-func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSURLRequest, config webkit.WKWebViewConfiguration) cocoa.NSWindow {
+func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSURLRequest, config webkit.WKWebViewConfiguration) (cocoa.NSWindow, webkit.WKWebView) {
 	wv := webkit.WKWebView_Init(frame, config)
 	wv.Retain()
 	wv.SetOpaque(false)
@@ -106,14 +106,14 @@ func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSU
 	win.MakeKeyAndOrderFront(win)
 	win.SetCollectionBehavior(cocoa.NSWindowCollectionBehaviorCanJoinAllSpaces)
 	win.Send("setHasShadow:", false)
-	// win.OrderOut(win)
+	win.OrderOut(win)
 
-	return win
+	return win, wv
 }
 
 func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfiguration, addr string) func(n objc.Object) {
 	return func(n objc.Object) {
-		win := g.newWebViewWindow(n, core.NSMakeRect(440, 320, 920, 500), req, config)
+		win, _ := g.newWebViewWindow(n, core.NSMakeRect(440, 320, 920, 500), req, config)
 
 		obj := cocoa.NSStatusBar_System().StatusItemWithLength(cocoa.NSVariableStatusItemLength)
 		obj.Retain()
@@ -143,6 +143,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				showWindow.SetState(0)
 				win.OrderOut(win)
 			} else {
+				// wv.Reload(nil)
 				showWindow.SetState(1)
 				win.OrderFront(win)
 			}
@@ -171,6 +172,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 		obj.SetMenu(menu)
 
 		tcli := g.t.TorrentClient
+
 		go func() {
 			completed := make(map[string]struct{})
 			for _, t := range tcli.Torrents() {
@@ -180,6 +182,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				completed[t.Name()] = struct{}{}
 			}
 
+			var lastPaste string
 			for {
 				if torrents := tcli.Torrents(); len(torrents) > 0 {
 					var lines []string
@@ -196,6 +199,18 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 						itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
 					})
 				}
+
+				gp := cocoa.NSPasteboard_GeneralPasteboard()
+				paste := gp.StringForType(cocoa.NSPasteboardTypeString)
+				if paste != lastPaste && strings.Contains(paste, "magnet:") {
+					if _, err := tcli.AddURI(paste); err != nil {
+						log.Error(err)
+					} else {
+						log.Info("Found magnet uri in clipboard")
+					}
+					lastPaste = paste
+				}
+
 				<-time.After(1 * time.Second)
 			}
 		}()

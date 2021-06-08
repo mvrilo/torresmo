@@ -94,13 +94,16 @@ func (s *wsPublisher) Serve() http.HandlerFunc {
 	}
 }
 
+type Response struct {
+	Topic string      `json:"topic"`
+	Data  interface{} `json:"data"`
+}
+
 // Publish sends data to a topic
 func (s *wsPublisher) Publish(topic Topic, data interface{}) {
-	reply, err := json.Marshal(struct {
-		Topic string      `json:"topic"`
-		Data  interface{} `json:"data"`
-	}{
-		topic.String(), data,
+	reply, err := json.Marshal(Response{
+		Topic: topic.String(),
+		Data:  data,
 	})
 	if err != nil {
 		return

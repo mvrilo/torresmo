@@ -5,20 +5,24 @@ package gui
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"sort"
+	"io"
 	"strings"
 	"sync"
 	"time"
 
-	torresm "github.com/mvrilo/torresmo"
-	"github.com/mvrilo/torresmo/log"
-	"github.com/skratchdot/open-golang/open"
-
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
 	"github.com/progrium/macdriver/cocoa"
 	"github.com/progrium/macdriver/core"
 	"github.com/progrium/macdriver/objc"
 	"github.com/progrium/macdriver/webkit"
+	"github.com/skratchdot/open-golang/open"
+
+	torresm "github.com/mvrilo/torresmo"
+	"github.com/mvrilo/torresmo/log"
+	"github.com/mvrilo/torresmo/stream"
 )
 
 func init() {
@@ -59,8 +63,7 @@ func (g *GuiMac) Register(torresm *torresm.Torresmo) {
 		addr = "127.0.0.1" + addr[0:]
 	}
 
-	addr = fmt.Sprintf("http://%s", addr)
-	url := core.URL(addr)
+	url := core.URL(fmt.Sprintf("http://%s", addr))
 	req := core.NSURLRequest_Init(url)
 	g.app = cocoa.NSApp_WithDidLaunch(g.setup(req, config, addr))
 
@@ -111,6 +114,38 @@ func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSU
 	return win, wv
 }
 
+func wsWatch(ctx context.Context, addr string) (res chan stream.Response, err error) {
+	uri := fmt.Sprintf("ws://%s/api/events/", addr)
+
+	conn, _, _, err := ws.Dial(ctx, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	res = make(chan stream.Response)
+	go func() {
+		for {
+			msg, op, err := wsutil.ReadServerData(conn)
+			if err != nil && err == io.EOF {
+				continue
+			}
+
+			if op == ws.OpContinuation {
+				continue
+			}
+
+			var payload stream.Response
+			if err = json.Unmarshal(msg, &payload); err != nil {
+				continue
+			}
+
+			res <- payload
+		}
+	}()
+
+	return
+}
+
 func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfiguration, addr string) func(n objc.Object) {
 	return func(n objc.Object) {
 		win, _ := g.newWebViewWindow(n, core.NSMakeRect(440, 320, 920, 500), req, config)
@@ -128,13 +163,12 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 		openBrowser.SetTitle("Open Browser")
 		openBrowser.SetAction(objc.Sel("browser:"))
 		cocoa.DefaultDelegateClass.AddMethod("browser:", func(_ objc.Object) {
-			if err := open.Run(addr); err != nil {
+			if err := open.Run(fmt.Sprintf("http://%s", addr)); err != nil {
 				log.Error("error opening browser: ", err)
 			}
 		})
 
 		showWindow := cocoa.NSMenuItem_New()
-		showWindow.Retain()
 		showWindow.SetTitle("Toggle Window")
 		showWindow.SetState(1)
 		showWindow.SetAction(objc.Sel("visible:"))
@@ -143,7 +177,6 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				showWindow.SetState(0)
 				win.OrderOut(win)
 			} else {
-				// wv.Reload(nil)
 				showWindow.SetState(1)
 				win.OrderFront(win)
 			}
@@ -172,34 +205,10 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 		obj.SetMenu(menu)
 
 		tcli := g.t.TorrentClient
-
 		go func() {
-			completed := make(map[string]struct{})
-			for _, t := range tcli.Torrents() {
-				if !t.Completed() {
-					continue
-				}
-				completed[t.Name()] = struct{}{}
-			}
-
 			var lastPaste string
+
 			for {
-				if torrents := tcli.Torrents(); len(torrents) > 0 {
-					var lines []string
-					for _, t := range torrents {
-						lines = append(lines, t.String())
-						if _, ok := completed[t.Name()]; !ok && t.Completed() {
-							completed[t.Name()] = struct{}{}
-							notifyCompleted(t.Name())
-						}
-					}
-
-					sort.Strings(lines)
-					core.Dispatch(func() {
-						itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
-					})
-				}
-
 				gp := cocoa.NSPasteboard_GeneralPasteboard()
 				paste := gp.StringForType(cocoa.NSPasteboardTypeString)
 				if paste != lastPaste && strings.Contains(paste, "magnet:") {
@@ -212,6 +221,54 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				}
 
 				<-time.After(1 * time.Second)
+			}
+		}()
+
+		torrents := tcli.Torrents()
+		downloading := make(map[string]interface{})
+		var completed int
+
+		for _, t := range torrents {
+			if t.Completed() {
+				completed++
+				continue
+			}
+			downloading[t.Name()] = nil
+		}
+
+		events, err := wsWatch(context.Background(), addr)
+		if err != nil {
+			log.Error(err)
+		}
+
+		go func() {
+			for event := range events {
+				data, ok := event.Data.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				name := data["name"].(string)
+
+				switch event.Topic {
+				case stream.TopicDownloading.String():
+					if _, ok := downloading[name]; !ok {
+						downloading[name] = nil
+					}
+				case stream.TopicCompleted.String():
+					notifyCompleted(name)
+					delete(downloading, name)
+					completed++
+				default:
+				}
+
+				core.Dispatch(func() {
+					lines := []string{
+						fmt.Sprintf("Downloading: %d", len(downloading)-completed),
+						fmt.Sprintf("Completed: %d", completed),
+					}
+					itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
+				})
 			}
 		}()
 	}

@@ -1,6 +1,6 @@
 import { render } from "preact";
 import React from "preact/compat";
-import { useState, useEffect } from "preact/hooks";
+import { useRef, useState, useCallback, useEffect } from "preact/hooks";
 
 import styles from "./styles";
 import WebsocketHandler from "./ws";
@@ -10,8 +10,6 @@ import "terminal.css";
 
 const sizes = ['b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'];
 const WSURI = "ws://localhost:8000/api/events/";
-
-const ws = new WebsocketHandler(WSURI);
 
 const humanBytes = (bytes: number) => {
    if (bytes === 0) {
@@ -81,13 +79,38 @@ const filterTorrents = (torrents = [], completed = false) =>
       torrents[torrent]);
 
 const Torresmo = () => {
-  const [ready, setReady] = useState(false);
+  const ws = useRef(null);
   const [status, setStatus] = useState(false);
   const [torrents, setTorrents] = useState({});
   const [onlineCount, setOnlineCount] = useState(0);
 
+  const onlineCallback = useCallback((count) => setOnlineCount(count));
+  const torrentsCallback = useCallback((torrent) => {
+    let speed = 0;
+    const { name, bytesCompleted } = torrent;
+    if (bytesCompleted && torrents[name]) {
+      speed = bytesCompleted - torrents[name].bytesCompleted;
+    }
+
+    setTorrents({ ...torrents, [name]: { ...torrent, speed } });
+  });
+
+  const onMessageCallback = (topic, data) => {
+    // console.log("received message from topic:", topic, data);
+    setStatus(true);
+
+    if (topic === "online") {
+      onlineCallback(data);
+      return;
+    }
+
+    torrentsCallback(data);
+  };
+
   useEffect(() => {
-    console.log("- ready", ready);
+    ws.conn = new WebsocketHandler(WSURI);
+    ws.conn.onStatusChanged = (s: boolean) => setStatus(s);
+
     document.body.addEventListener("paste", (e: ClipboardEvent) => {
       e.preventDefault();
       const data = e.clipboardData.getData("text");
@@ -97,7 +120,6 @@ const Torresmo = () => {
       }
     });
 
-    document.body.addEventListener("dragover", (e) => e.preventDefault());
     document.body.addEventListener("drop", (e) => {
       e.preventDefault();
       console.log("drop", e);
@@ -113,6 +135,8 @@ const Torresmo = () => {
       }
     });
 
+    document.body.addEventListener("dragover", (e) => e.preventDefault());
+
     (async () => {
       const ts = { ...torrents };
       const res = await listTorrents();
@@ -121,31 +145,18 @@ const Torresmo = () => {
         setTorrents(ts);
       }
       main.style.opacity = 1;
-      setReady(true);
     })();
-  }, [ready]);
+
+    return () => {
+      ws.conn.close();
+    };
+  }, []);
 
   useEffect(() => {
-    ws.onStatusChanged = (s: boolean) => setStatus(s);
-    ws.onMessageReceived = ({ topic, data }) => {
-      console.log("received message from topic:", topic, data);
-      setStatus(true);
-
-      if (topic === "online") {
-        setOnlineCount(data);
-        return;
-      }
-
-      let speed = 0;
-      const { name, bytesCompleted } = data;
-      const newTorrents = { ...torrents };
-      if (bytesCompleted && newTorrents[name] && newTorrents[name].bytesCompleted) {
-        speed = bytesCompleted - newTorrents[name].bytesCompleted;
-      }
-      newTorrents[name] = { ...data, speed };
-      setTorrents({ ...newTorrents });
+    ws.conn.onMessageReceived = ({ topic, data }) => {
+      onMessageCallback(topic, data);
     };
-  }, [torrents, onlineCount, status]);
+  }, [onMessageCallback]);
 
   return (
     <div>

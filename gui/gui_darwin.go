@@ -114,7 +114,7 @@ func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSU
 	return win, wv
 }
 
-func wsWatch(ctx context.Context, addr string) (res chan stream.Response, err error) {
+func wsWatch(ctx context.Context, addr string) (chan stream.Response, error) {
 	uri := fmt.Sprintf("ws://%s/api/events/", addr)
 
 	conn, _, _, err := ws.Dial(ctx, uri)
@@ -122,7 +122,7 @@ func wsWatch(ctx context.Context, addr string) (res chan stream.Response, err er
 		return nil, err
 	}
 
-	res = make(chan stream.Response)
+	res := make(chan stream.Response)
 	go func() {
 		for {
 			msg, op, err := wsutil.ReadServerData(conn)
@@ -143,7 +143,7 @@ func wsWatch(ctx context.Context, addr string) (res chan stream.Response, err er
 		}
 	}()
 
-	return
+	return res, nil
 }
 
 func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfiguration, addr string) func(n objc.Object) {
@@ -160,7 +160,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 
 		openBrowser := cocoa.NSMenuItem_New()
 		openBrowser.Retain()
-		openBrowser.SetTitle("Open Browser")
+		openBrowser.SetTitle("Open in Browser")
 		openBrowser.SetAction(objc.Sel("browser:"))
 		cocoa.DefaultDelegateClass.AddMethod("browser:", func(_ objc.Object) {
 			if err := open.Run(fmt.Sprintf("http://%s", addr)); err != nil {
@@ -226,15 +226,27 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 
 		torrents := tcli.Torrents()
 		downloading := make(map[string]interface{})
-		var completed int
+		completed := make(map[string]interface{})
+
+		dispatch := func() {
+			core.Dispatch(func() {
+				lines := []string{
+					fmt.Sprintf("Downloading: %d", len(downloading)),
+					fmt.Sprintf("Completed: %d", len(completed)),
+				}
+				itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
+			})
+		}
 
 		for _, t := range torrents {
 			if t.Completed() {
-				completed++
+				completed[t.Name()] = nil
 				continue
 			}
 			downloading[t.Name()] = nil
 		}
+
+		dispatch()
 
 		events, err := wsWatch(context.Background(), addr)
 		if err != nil {
@@ -247,7 +259,6 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				if !ok {
 					continue
 				}
-
 				name := data["name"].(string)
 
 				switch event.Topic {
@@ -256,19 +267,15 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 						downloading[name] = nil
 					}
 				case stream.TopicCompleted.String():
-					notifyCompleted(name)
+					if _, ok := completed[name]; !ok {
+						notifyCompleted(name)
+						completed[name] = nil
+					}
 					delete(downloading, name)
-					completed++
 				default:
 				}
 
-				core.Dispatch(func() {
-					lines := []string{
-						fmt.Sprintf("Downloading: %d", len(downloading)-completed),
-						fmt.Sprintf("Completed: %d", completed),
-					}
-					itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
-				})
+				dispatch()
 			}
 		}()
 	}

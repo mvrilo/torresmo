@@ -114,7 +114,7 @@ func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSU
 	return win, wv
 }
 
-func wsWatch(ctx context.Context, addr string) (chan tevent.Response, error) {
+func wsWatch(ctx context.Context, addr string) (chan tevent.Message, error) {
 	uri := fmt.Sprintf("ws://%s/api/events/", addr)
 
 	conn, _, _, err := ws.Dial(ctx, uri)
@@ -122,7 +122,7 @@ func wsWatch(ctx context.Context, addr string) (chan tevent.Response, error) {
 		return nil, err
 	}
 
-	res := make(chan tevent.Response)
+	res := make(chan tevent.Message)
 	go func() {
 		for {
 			msg, op, err := wsutil.ReadServerData(conn)
@@ -134,7 +134,7 @@ func wsWatch(ctx context.Context, addr string) (chan tevent.Response, error) {
 				continue
 			}
 
-			var payload tevent.Response
+			var payload tevent.Message
 			if err = json.Unmarshal(msg, &payload); err != nil {
 				continue
 			}

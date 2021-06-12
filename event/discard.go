@@ -5,16 +5,11 @@ import (
 	"net/http"
 )
 
-type discardHandler struct{}
+type DiscardHandler struct{}
 
-var _ Handler = discardHandler{}
+var _ Handler = DiscardHandler{}
 
-func (discardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {}
-func (discardHandler) Publish(Topic, interface{})                       {}
-func (discardHandler) Subscribe(Topic, net.Conn)                        {}
-func (discardHandler) Unsubscribe(Topic, net.Conn)                      {}
-
-// Discard handler
-func Discard() discardHandler {
-	return discardHandler{}
-}
+func (DiscardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (DiscardHandler) Publish(Topic, interface{})                       {}
+func (DiscardHandler) Subscribe(Topic, net.Conn)                        {}
+func (DiscardHandler) Unsubscribe(Topic, net.Conn)                      {}

@@ -13,23 +13,23 @@ import (
 	"github.com/mvrilo/torresmo/log"
 )
 
-type wsHandler struct {
+type WSHandler struct {
 	online uint
 	topics map[fmt.Stringer]map[net.Conn]struct{}
 	mu     *sync.Mutex
 	log    log.Logger
 }
 
-var _ Handler = (*wsHandler)(nil)
+var _ Handler = (*WSHandler)(nil)
 
-func (s *wsHandler) Unsubscribe(topic Topic, conn net.Conn) {
+func (s *WSHandler) Unsubscribe(topic Topic, conn net.Conn) {
 	s.mu.Lock()
 	delete(s.topics[topic], conn)
 	conn.Close()
 	s.mu.Unlock()
 }
 
-func (s *wsHandler) Subscribe(topic Topic, conn net.Conn) {
+func (s *WSHandler) Subscribe(topic Topic, conn net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -41,7 +41,7 @@ func (s *wsHandler) Subscribe(topic Topic, conn net.Conn) {
 	s.log.Info("ws: new connection on topic: ", topic)
 }
 
-func (s *wsHandler) getTopicConns(topic Topic) (conns []net.Conn) {
+func (s *WSHandler) getTopicConns(topic Topic) (conns []net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for topicConn := range s.topics[topic] {
@@ -50,7 +50,7 @@ func (s *wsHandler) getTopicConns(topic Topic) (conns []net.Conn) {
 	return
 }
 
-func (s *wsHandler) handleConn(topics []Topic, conn net.Conn) {
+func (s *WSHandler) handleConn(topics []Topic, conn net.Conn) {
 	for _, topic := range topics {
 		s.Subscribe(topic, conn)
 	}
@@ -81,7 +81,7 @@ func (s *wsHandler) handleConn(topics []Topic, conn net.Conn) {
 }
 
 // ServeHTTP implements a http handler
-func (s *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, _, _, err := ws.UpgradeHTTP(r, w)
 	if err != nil {
 		w.WriteHeader(500)
@@ -92,14 +92,9 @@ func (s *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go s.handleConn(AllTopics, conn)
 }
 
-type Response struct {
-	Topic string      `json:"topic"`
-	Data  interface{} `json:"data"`
-}
-
 // Publish sends data to a topic
-func (s *wsHandler) Publish(topic Topic, data interface{}) {
-	reply, err := json.Marshal(Response{
+func (s *WSHandler) Publish(topic Topic, data interface{}) {
+	reply, err := json.Marshal(Message{
 		Topic: topic.String(),
 		Data:  data,
 	})
@@ -117,7 +112,7 @@ func (s *wsHandler) Publish(topic Topic, data interface{}) {
 
 // NewWebsocket returns a websocket implementation of Handler
 func NewWebsocket(log log.Logger) Handler {
-	return &wsHandler{
+	return &WSHandler{
 		topics: make(map[fmt.Stringer]map[net.Conn]struct{}),
 		log:    log,
 		mu:     new(sync.Mutex),

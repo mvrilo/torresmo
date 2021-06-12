@@ -9,16 +9,16 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/mvrilo/torresmo/errors"
+	"github.com/mvrilo/torresmo/event"
 	"github.com/mvrilo/torresmo/log"
-	"github.com/mvrilo/torresmo/stream"
 	"github.com/mvrilo/torresmo/torrent"
 )
 
 type handler struct {
 	*gin.Engine
-	stream stream.Publisher
-	client torrent.Client
-	logger log.Logger
+	eventHandler event.Handler
+	client       torrent.Client
+	logger       log.Logger
 }
 
 var _ http.Handler = &handler{}
@@ -104,15 +104,15 @@ func (h *handler) loggingMiddleware(ctx *gin.Context) {
 }
 
 // NewHandler returns a default handler implemented with gin
-func NewHandler(cli torrent.Client, logger log.Logger, staticFiles fs.FS, downloadedFiles fs.FS, publisher stream.Publisher, debug bool) http.Handler {
+func NewHandler(cli torrent.Client, logger log.Logger, staticFiles fs.FS, downloadedFiles fs.FS, eventHandler event.Handler, debug bool) http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
 	h := &handler{
-		Engine: router,
-		stream: publisher,
-		client: cli,
-		logger: logger,
+		Engine:       router,
+		eventHandler: eventHandler,
+		client:       cli,
+		logger:       logger,
 	}
 
 	if debug {
@@ -128,7 +128,7 @@ func NewHandler(cli torrent.Client, logger log.Logger, staticFiles fs.FS, downlo
 	router.GET("/api/stats/", h.Stats)
 	router.GET("/api/torrents/", h.Torrents)
 	router.POST("/api/torrents/", h.AddTorrent)
-	router.GET("/api/events/", gin.WrapH(h.stream.Serve()))
+	router.GET("/api/events/", gin.WrapH(h.eventHandler.(http.Handler)))
 	router.Use(gin.WrapH(http.FileServer(http.FS(staticFiles))))
 
 	return h

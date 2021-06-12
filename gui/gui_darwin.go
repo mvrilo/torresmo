@@ -21,8 +21,8 @@ import (
 	"github.com/skratchdot/open-golang/open"
 
 	torresm "github.com/mvrilo/torresmo"
+	tevent "github.com/mvrilo/torresmo/event"
 	"github.com/mvrilo/torresmo/log"
-	"github.com/mvrilo/torresmo/stream"
 )
 
 func init() {
@@ -114,7 +114,7 @@ func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSU
 	return win, wv
 }
 
-func wsWatch(ctx context.Context, addr string) (chan stream.Response, error) {
+func wsWatch(ctx context.Context, addr string) (chan tevent.Response, error) {
 	uri := fmt.Sprintf("ws://%s/api/events/", addr)
 
 	conn, _, _, err := ws.Dial(ctx, uri)
@@ -122,7 +122,7 @@ func wsWatch(ctx context.Context, addr string) (chan stream.Response, error) {
 		return nil, err
 	}
 
-	res := make(chan stream.Response)
+	res := make(chan tevent.Response)
 	go func() {
 		for {
 			msg, op, err := wsutil.ReadServerData(conn)
@@ -134,7 +134,7 @@ func wsWatch(ctx context.Context, addr string) (chan stream.Response, error) {
 				continue
 			}
 
-			var payload stream.Response
+			var payload tevent.Response
 			if err = json.Unmarshal(msg, &payload); err != nil {
 				continue
 			}
@@ -262,11 +262,11 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				name := data["name"].(string)
 
 				switch event.Topic {
-				case stream.TopicDownloading.String():
+				case tevent.TopicDownloading.String():
 					if _, ok := downloading[name]; !ok {
 						downloading[name] = nil
 					}
-				case stream.TopicCompleted.String():
+				case tevent.TopicCompleted.String():
 					if _, ok := completed[name]; !ok {
 						notifyCompleted(name)
 						completed[name] = nil

@@ -7,8 +7,8 @@ import (
 	gohttp "net/http"
 	"time"
 
+	"github.com/mvrilo/torresmo/event"
 	"github.com/mvrilo/torresmo/log"
-	"github.com/mvrilo/torresmo/stream"
 	"github.com/mvrilo/torresmo/torrent"
 )
 
@@ -18,7 +18,7 @@ var staticFiles embed.FS
 type Torresmo struct {
 	HTTPServer    *gohttp.Server
 	HTTPHandler   gohttp.Handler
-	Publisher     stream.Publisher
+	EventHandler  event.Handler
 	TorrentClient torrent.Client
 	Logger        log.Logger
 	StaticFiles   fs.FS
@@ -45,7 +45,7 @@ func (t *Torresmo) Shutdown(ctx context.Context, timeout time.Duration) error {
 // New initializes a Torresmo with some defaults
 func New() (*Torresmo, error) {
 	logger := log.NewLogger()
-	publisher := stream.NewWebsocket(logger)
+	wshandler := event.NewWebsocket(logger)
 
 	staticFiles, err := fs.Sub(staticFiles, "static/dist")
 	if err != nil {
@@ -59,7 +59,7 @@ func New() (*Torresmo, error) {
 
 	return &Torresmo{
 		Logger:        logger,
-		Publisher:     publisher,
+		EventHandler:  wshandler,
 		TorrentClient: torrentClient,
 		StaticFiles:   staticFiles,
 	}, nil

@@ -1,6 +1,6 @@
-package stream
+package event
 
-// Topic of a stream
+// Topic of an event
 type Topic uint
 
 // Common topics

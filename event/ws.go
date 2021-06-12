@@ -1,4 +1,4 @@
-package stream
+package event
 
 import (
 	"encoding/json"
@@ -13,22 +13,23 @@ import (
 	"github.com/mvrilo/torresmo/log"
 )
 
-type wsPublisher struct {
+type wsHandler struct {
 	online uint
 	topics map[fmt.Stringer]map[net.Conn]struct{}
 	mu     *sync.Mutex
 	log    log.Logger
 }
 
-var _ Publisher = (*wsPublisher)(nil)
+var _ Handler = (*wsHandler)(nil)
 
-func (s *wsPublisher) removeConn(topic Topic, conn net.Conn) {
+func (s *wsHandler) Unsubscribe(topic Topic, conn net.Conn) {
 	s.mu.Lock()
 	delete(s.topics[topic], conn)
+	conn.Close()
 	s.mu.Unlock()
 }
 
-func (s *wsPublisher) addConn(topic Topic, conn net.Conn) {
+func (s *wsHandler) Subscribe(topic Topic, conn net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -40,7 +41,7 @@ func (s *wsPublisher) addConn(topic Topic, conn net.Conn) {
 	s.log.Info("ws: new connection on topic: ", topic)
 }
 
-func (s *wsPublisher) getTopicConns(topic Topic) (conns []net.Conn) {
+func (s *wsHandler) getTopicConns(topic Topic) (conns []net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for topicConn := range s.topics[topic] {
@@ -49,9 +50,9 @@ func (s *wsPublisher) getTopicConns(topic Topic) (conns []net.Conn) {
 	return
 }
 
-func (s *wsPublisher) handleConn(topics []Topic, conn net.Conn) {
+func (s *wsHandler) handleConn(topics []Topic, conn net.Conn) {
 	for _, topic := range topics {
-		s.addConn(topic, conn)
+		s.Subscribe(topic, conn)
 	}
 	s.online++
 	s.Publish(TopicOnline, s.online)
@@ -64,11 +65,10 @@ func (s *wsPublisher) handleConn(topics []Topic, conn net.Conn) {
 
 		if err != nil {
 			for _, topic := range topics {
-				s.removeConn(topic, conn)
+				s.Unsubscribe(topic, conn)
 			}
 			s.online--
 			s.Publish(TopicOnline, s.online)
-			conn.Close()
 			break
 		}
 
@@ -80,18 +80,16 @@ func (s *wsPublisher) handleConn(topics []Topic, conn net.Conn) {
 	}
 }
 
-// Serve retrns a http.HandlerFunc
-func (s *wsPublisher) Serve() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		conn, _, _, err := ws.UpgradeHTTP(r, w)
-		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte(`{ "error": "` + err.Error() + `" }`))
-			return
-		}
-
-		go s.handleConn(AllTopics, conn)
+// ServeHTTP implements a http handler
+func (s *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	conn, _, _, err := ws.UpgradeHTTP(r, w)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(`{ "error": "` + err.Error() + `" }`))
+		return
 	}
+
+	go s.handleConn(AllTopics, conn)
 }
 
 type Response struct {
@@ -100,7 +98,7 @@ type Response struct {
 }
 
 // Publish sends data to a topic
-func (s *wsPublisher) Publish(topic Topic, data interface{}) {
+func (s *wsHandler) Publish(topic Topic, data interface{}) {
 	reply, err := json.Marshal(Response{
 		Topic: topic.String(),
 		Data:  data,
@@ -117,9 +115,9 @@ func (s *wsPublisher) Publish(topic Topic, data interface{}) {
 	}
 }
 
-// NewWebsocket returns a websocket implementation of Publisher
-func NewWebsocket(log log.Logger) Publisher {
-	return &wsPublisher{
+// NewWebsocket returns a websocket implementation of Handler
+func NewWebsocket(log log.Logger) Handler {
+	return &wsHandler{
 		topics: make(map[fmt.Stringer]map[net.Conn]struct{}),
 		log:    log,
 		mu:     new(sync.Mutex),

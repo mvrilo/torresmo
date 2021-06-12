@@ -18,8 +18,8 @@ import (
 	"github.com/anacrolix/torrent/storage"
 	"golang.org/x/time/rate"
 
+	"github.com/mvrilo/torresmo/event"
 	"github.com/mvrilo/torresmo/log"
-	"github.com/mvrilo/torresmo/stream"
 )
 
 const MimeBitTorrent = "application/x-bittorrent"
@@ -36,7 +36,7 @@ type Stats struct {
 type ClientBuilder interface {
 	WithSeed(seed bool) Client
 	WithOutput(output string) Client
-	WithPublisher(pub stream.Publisher) Client
+	WithEventHandler(pub event.Handler) Client
 	WithDownloadLimit(limit int) Client
 	WithUploadLimit(limit int) Client
 	WithTorrentFiles(dir string) Client
@@ -61,8 +61,8 @@ type client struct {
 	*torren.Client
 	conf *torren.ClientConfig
 
-	Logger log.Logger
-	stream stream.Publisher
+	Logger       log.Logger
+	eventHandler event.Handler
 
 	mu           sync.Mutex
 	watchDir     string
@@ -93,8 +93,8 @@ func (c *client) Start() (err error) {
 	return
 }
 
-func (c *client) WithPublisher(pub stream.Publisher) Client {
-	c.stream = pub
+func (c *client) WithEventHandler(pub event.Handler) Client {
+	c.eventHandler = pub
 	return c
 }
 
@@ -149,7 +149,7 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 
 		nt := newTorrent(t)
 		ch <- nt
-		c.stream.Publish(stream.TopicStarted, nt)
+		c.eventHandler.Publish(event.TopicStarted, nt)
 
 		if c.biggestFirst {
 			BiggestFileFromTorrent(nt).Now()
@@ -162,11 +162,11 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 			nt = newTorrent(t)
 
 			if nt.Completed() {
-				c.stream.Publish(stream.TopicCompleted, nt)
+				c.eventHandler.Publish(event.TopicCompleted, nt)
 				break
 			}
 
-			c.stream.Publish(stream.TopicDownloading, nt)
+			c.eventHandler.Publish(event.TopicDownloading, nt)
 		}
 	}()
 	return ch

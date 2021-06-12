@@ -55,7 +55,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				torresm.Logger,
 				torresm.StaticFiles,
 				outFiles,
-				torresm.Publisher,
+				torresm.EventHandler,
 				debug,
 			)
 
@@ -72,7 +72,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 
 			cli := torresm.
 				TorrentClient.
-				WithPublisher(torresm.Publisher).
+				WithEventHandler(torresm.EventHandler).
 				WithOutput(out).
 				WithDownloadLimit(downloadLimit).
 				WithUploadLimit(uploadLimit).

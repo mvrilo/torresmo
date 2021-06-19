@@ -3,6 +3,8 @@
 COMMIT = $(shell git rev-parse --short HEAD)
 VERSION = $(shell cat version)
 LDFLAGS = -X main.Commit=$(COMMIT) -X main.Version=$(VERSION)
+GCFLAGS = -N -v -l -e -m=2 -d=checkptr
+GODEBUG = cgocheck=2
 
 all: torresmo
 
@@ -10,16 +12,16 @@ torresmo: static/dist/bundle.js
 	time go build -ldflags="-s -w $(LDFLAGS)" -o torresmo cmd/torresmo/*.go
 
 torresmo-dev: prepare web
-	time go build -ldflags="$(LDFLAGS)" -race -o torresmo-dev cmd/torresmo/*.go
+	time go build -gcflags="$(GCFLAGS)" -ldflags="$(LDFLAGS)" -race -o torresmo-dev cmd/torresmo/*.go
 
 run: torresmo
 	./torresmo server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=9000
 
 dev: torresmo-dev
-	./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=90
+	GODEBUG=$(GODEBUG) ./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=90
 
 debug: torresmo-dev
-	./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=500000
+	GODEBUG=$(GODEBUG) ./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=500000
 
 macapp:
 	go build -o macapp ./tools/macapp/main.go

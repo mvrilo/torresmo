@@ -1,84 +1,22 @@
-import { render } from "preact";
+import { FC, render } from "preact";
 import React from "preact/compat";
 import { useRef, useState, useCallback, useEffect } from "preact/hooks";
+import "terminal.css";
 
-import styles from "./styles";
 import WebsocketHandler from "./ws";
 import { addTorrent, listTorrents } from "./api";
 
-import "terminal.css";
+import Header from "./Header";
+import TorrentList from "./TorrentList";
 
-const sizes = ['b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'];
 const WSURI = "ws://localhost:8000/api/events/";
-
-const humanBytes = (bytes: number) => {
-   if (bytes === 0) {
-     return '0b';
-   }
-
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  if (isNaN(i)) {
-    return '0b';
-  }
-
-  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + sizes[i];
-};
-
-const List = ({ torrents, header }) => {
-  const count = Object.keys(torrents).length;
-  const list = [<h2>{header} {count > 0 ? `(${count})` : ""}</h2>];
-
-  if (count === 0) {
-    list.push(<p>None yet</p>);
-    return list;
-  }
-
-  for (const i in torrents) {
-    const torrent = torrents[i];
-    const { name, speed, infoHash, files, totalLength, bytesCompleted } = torrent;
-    const percentage = parseFloat(bytesCompleted / totalLength * 100.0).toFixed(2);
-    const downloaded = humanBytes(bytesCompleted);
-    const total = humanBytes(totalLength);
-
-    list.push(
-      <div style={styles.listItem}>
-        <div style={{ ...styles.listItemBackground, width: `${percentage}%` }}></div>
-        <p style={styles.listItemLeft}>
-          {name}<br/>
-          {infoHash} (files: {files.length})
-        </p>
-        <p style={styles.listItemRight}>
-          {downloaded}/{total}<br/>
-          {percentage}% {humanBytes(speed)}/s
-        </p>
-      </div>
-    );
-  }
-
-  return list;
-};
-
-const Header = ({ connected, onlineCount }) => {
-  const color = connected ? "lightgreen" : "red";
-  const status = connected ? "connected" : "disconnected";
-  const count = onlineCount < 1 ? "" : `(${onlineCount})`;
-  return (
-    <nav>
-      <h1>
-        Torresmo 
-        <small style={{color}}> {status} {count}</small>
-      </h1>
-      <p style={styles.info}>paste a magnet uri to start downloading</p>
-    </nav>
-  );
-};
 
 const filterTorrents = (torrents = [], completed = false) =>
   Object.keys(torrents).filter((torrent) =>
     torrents[torrent].completed === completed).map((torrent) =>
       torrents[torrent]);
 
-const Torresmo = () => {
+const Torresmo: FC<unknown> = () => {
   const ws = useRef(null);
   const [status, setStatus] = useState(false);
   const [torrents, setTorrents] = useState({});
@@ -120,6 +58,7 @@ const Torresmo = () => {
       }
     });
 
+    // TODO: support dropping torrent files
     document.body.addEventListener("drop", (e) => {
       e.preventDefault();
       console.log("drop", e);
@@ -161,8 +100,10 @@ const Torresmo = () => {
   return (
     <div>
       <Header connected={status} onlineCount={onlineCount} />
-      <List header="Downloading" torrents={filterTorrents(torrents, false)} />
-      <List header="Completed" torrents={filterTorrents(torrents, true)} />
+      <p style={{ color: "#888" }}>paste a magnet uri to start downloading</p>
+
+      <TorrentList label="Downloading" torrents={filterTorrents(torrents, false)} />
+      <TorrentList label="Completed" torrents={filterTorrents(torrents, true)} />
     </div>
   );
 };

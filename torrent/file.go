@@ -49,26 +49,36 @@ func (f *file) Name() string {
 }
 
 func (f *file) Now() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.pri = byte(torren.PiecePriorityNow)
 	f.File.SetPriority(torren.PiecePriorityNow)
 }
 
 func (f *file) High() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.pri = byte(torren.PiecePriorityHigh)
 	f.File.SetPriority(torren.PiecePriorityHigh)
 }
 
 func (f *file) Normal() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.pri = byte(torren.PiecePriorityNormal)
 	f.File.SetPriority(torren.PiecePriorityNormal)
 }
 
 func (f *file) Zero() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.pri = byte(torren.PiecePriorityNone)
 	f.File.SetPriority(torren.PiecePriorityNone)
 }
 
 func (f *file) GetPriority() byte {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return f.pri
 }
 

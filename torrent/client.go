@@ -149,24 +149,22 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 
 		nt := newTorrent(t)
 		ch <- nt
-		c.eventHandler.Publish(event.TopicStarted, nt)
+
+		evthandler := c.eventHandler
+		evthandler.Publish(event.TopicStarted, nt)
 
 		if c.biggestFirst {
 			BiggestFileFromTorrent(nt).Now()
 		}
 
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(500 * time.Millisecond)
 		for {
 			<-ticker.C
-
 			nt = newTorrent(t)
-
+			evthandler.Publish(event.TopicDownloading, nt)
 			if nt.Completed() {
-				c.eventHandler.Publish(event.TopicCompleted, nt)
-				break
+				evthandler.Publish(event.TopicCompleted, nt)
 			}
-
-			c.eventHandler.Publish(event.TopicDownloading, nt)
 		}
 	}()
 	return ch
@@ -175,9 +173,11 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 func (c *client) getTorrentFilesFilename() (filenames []string) {
 	if c.watchDir != "" {
 		files, err := filepath.Glob(c.watchDir + "/*.torrent")
-		if err == nil {
-			filenames = append(filenames, files...)
+		if err != nil {
+			c.Logger.Error("error getting files")
+			return
 		}
+		filenames = append(filenames, files...)
 	}
 	return
 }
@@ -187,6 +187,7 @@ func (c *client) ReadTorrentFiles() error {
 	for _, name := range files {
 		f, err := os.Open(name)
 		if err != nil {
+			c.Logger.Error(fmt.Sprintf("error opening file: %s", name))
 			continue
 		}
 

@@ -78,40 +78,13 @@ func (g *GuiMac) Register(torresm *torresm.Torresmo) {
 
 func notifyCompleted(value string) {
 	notification := NSUserNotification{NSUserNotification_.Alloc().Init()}
+	defer notification.Release()
+
 	notification.Set("title:", core.String("Torrent Downloaded"))
 	notification.Set("informativeText:", core.String(value))
 
 	center := NSUserNotificationCenter{NSUserNotificationCenter_.Send("defaultUserNotificationCenter")}
 	center.Send("deliverNotification:", notification)
-	notification.Release()
-}
-
-func (g *GuiMac) newWebViewWindow(n objc.Object, frame core.NSRect, req core.NSURLRequest, config webkit.WKWebViewConfiguration) (cocoa.NSWindow, webkit.WKWebView) {
-	wv := webkit.WKWebView_Init(frame, config)
-	wv.Retain()
-	wv.SetOpaque(false)
-	wv.SetValueForKey(core.False, core.String("drawsBackground"))
-	wv.LoadRequest(req)
-
-	win := cocoa.NSWindow_Init(
-		frame,
-		cocoa.NSClosableWindowMask|cocoa.NSBorderlessWindowMask|cocoa.NSResizableWindowMask,
-		cocoa.NSBackingStoreBuffered,
-		false,
-	)
-	win.Retain()
-	// win.Center()
-	win.SetContentView(wv)
-	win.SetOpaque(false)
-	win.SetTitleVisibility(cocoa.NSWindowTitleHidden)
-	win.SetTitlebarAppearsTransparent(true)
-	win.SetLevel(cocoa.NSMainMenuWindowLevel + 2)
-	win.MakeKeyAndOrderFront(win)
-	win.SetCollectionBehavior(cocoa.NSWindowCollectionBehaviorCanJoinAllSpaces)
-	win.Send("setHasShadow:", false)
-	win.OrderOut(win)
-
-	return win, wv
 }
 
 func wsWatch(ctx context.Context, addr string) (chan tevent.Message, error) {
@@ -148,18 +121,40 @@ func wsWatch(ctx context.Context, addr string) (chan tevent.Message, error) {
 
 func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfiguration, addr string) func(n objc.Object) {
 	return func(n objc.Object) {
-		win, _ := g.newWebViewWindow(n, core.NSMakeRect(440, 320, 920, 500), req, config)
+		frame := core.NSMakeRect(580, 180, 520, 650)
+		wv := webkit.WKWebView_Init(frame, config)
+		wv.Retain()
+		wv.SetOpaque(false)
+		wv.SetValueForKey(core.False, core.String("drawsBackground"))
+		wv.LoadRequest(req)
+
+		win := cocoa.NSWindow_Init(
+			frame,
+			cocoa.NSClosableWindowMask|cocoa.NSBorderlessWindowMask|cocoa.NSResizableWindowMask,
+			cocoa.NSBackingStoreBuffered,
+			false,
+		)
+		win.Retain()
+		win.SetContentView(wv)
+		win.SetOpaque(false)
+		win.SetTitleVisibility(cocoa.NSWindowTitleHidden)
+		win.SetTitlebarAppearsTransparent(true)
+		win.SetLevel(cocoa.NSMainMenuWindowLevel + 2)
+		win.MakeKeyAndOrderFront(win)
+		win.SetCollectionBehavior(cocoa.NSWindowCollectionBehaviorCanJoinAllSpaces)
+		win.Send("setHasShadow:", false)
+		win.OrderOut(win)
 
 		obj := cocoa.NSStatusBar_System().StatusItemWithLength(cocoa.NSVariableStatusItemLength)
 		obj.Retain()
 		obj.Button().SetTitle("Torresmo")
 
 		itemTorrents := cocoa.NSMenuItem_New()
+		itemTorrents.Retain()
 		itemTorrents.SetEnabled(false)
 		itemTorrents.SetAttributedTitle("no torrents yet")
 
 		openBrowser := cocoa.NSMenuItem_New()
-		openBrowser.Retain()
 		openBrowser.SetTitle("Open in Browser")
 		openBrowser.SetAction(objc.Sel("browser:"))
 		cocoa.DefaultDelegateClass.AddMethod("browser:", func(_ objc.Object) {
@@ -183,7 +178,6 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 		})
 
 		itemQuit := cocoa.NSMenuItem_New()
-		itemQuit.Retain()
 		itemQuit.SetTitle("Quit")
 		itemQuit.SetAction(objc.Sel("done:"))
 		cocoa.DefaultDelegateClass.AddMethod("done:", func(_ objc.Object) {
@@ -195,6 +189,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 		})
 
 		menu := cocoa.NSMenu_New()
+		menu.Retain()
 		menu.SetAutoenablesItems(false)
 		menu.AddItem(showWindow)
 		menu.AddItem(openBrowser)
@@ -219,17 +214,21 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 					}
 					lastPaste = paste
 				}
-
+				gp.Release()
 				<-time.After(1 * time.Second)
 			}
 		}()
 
+		var mu sync.Mutex
 		torrents := tcli.Torrents()
 		downloading := make(map[string]interface{})
 		completed := make(map[string]interface{})
 
 		dispatch := func() {
 			core.Dispatch(func() {
+				mu.Lock()
+				defer mu.Unlock()
+
 				lines := []string{
 					fmt.Sprintf("Downloading: %d", len(downloading)),
 					fmt.Sprintf("Completed: %d", len(completed)),
@@ -259,7 +258,11 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 				if !ok {
 					continue
 				}
-				name := data["name"].(string)
+
+				name, ok := data["name"].(string)
+				if !ok {
+					continue
+				}
 
 				switch event.Topic {
 				case tevent.TopicDownloading.String():

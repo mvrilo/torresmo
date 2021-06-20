@@ -1,6 +1,6 @@
 .DS_Store
 tmp
-macapp
+/tools/macapp/macapp
 /torresmo
 /torresmo-*
 *.db
@@ -8,7 +8,7 @@ static/*.log
 static/node_modules
 static/dist/*.css
 static/dist/*.js
-/macassets/torresmo
+/assets/torresmo
 /dist/
 /downloads
 depaware.txt

@@ -1,4 +1,4 @@
-.PHONY: all run dev debug mac web prepare clean test release
+.PHONY: all run dev debug mac web prepare clean test release macapp
 
 COMMIT = $(shell git rev-parse --short HEAD)
 VERSION = $(shell cat version)
@@ -23,20 +23,19 @@ dev: torresmo-dev
 debug: torresmo-dev
 	GODEBUG=$(GODEBUG) ./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=500000
 
-macapp:
-	go build -o macapp ./tools/macapp/main.go
+tools/macapp/macapp:
+	time go build -o ./tools/macapp/macapp ./tools/macapp/main.go
 
-mac: macapp torresmo
-	chmod +x macassets/torresmo.sh;
-	cp torresmo macassets/;
-	./macapp \
-		-assets=./macassets \
-		-bin=torresmo.sh \
+macapp: tools/macapp/macapp torresmo
+	cp torresmo assets/;
+	./tools/macapp/macapp \
+		-assets=./assets \
+		-bin=torresmo-mac.sh \
 		-dmg=Torresmo \
 		-name=Torresmo \
 		-o=./dist \
 		-identifier co.murilo.torresmo \
-		-icon=./macassets/icon.png
+		-icon=./assets/icon.png
 
 web: static/dist/bundle.js
 

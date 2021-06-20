@@ -7,14 +7,14 @@ Torresmo is an experimental Torrent client and server built with Go.
 
 ## Features
 
-- Easy to deploy, single binary
+- Single binary deploy
 - Bultin HTTP server
 - Websocket support
 - Embedded web interface (using esbuild, TypeScript and Preact)
-- Graphical interface (Mac only for now, using [macdriver](https://github.com/progrium/macdriver))
-- mDNS discovery mechanism
+- Initial GUI support (mac only for now, using [macdriver](https://github.com/progrium/macdriver))
+- Server discovery via mDNS
 
-![demo](demo.png)
+![demo](assets/demo.png)
 
 ## Build
 
@@ -54,18 +54,21 @@ Usage:
   torresmo server [flags]
 
 Flags:
-  -a, --addr string          HTTP Server address (default ":8000")
-  -b, --biggest              Prioritize the biggest file in the torrent (default true)
-  -d, --debug                Enable seeding (default true)
-  -c, --discovery            Enable mDNS discovery (default true)
-  -D, --download-limit int   Download limit
-  -g, --gui                  Runs graphical interface (default true)
-  -h, --help                 help for server
-  -o, --out string           Output directory (default "downloads")
-  -s, --seed                 Enable seeding (default true)
-  -e, --serve                Serve downloaded files (default true)
-  -U, --upload-limit int     Upload limit
-  -w, --watch string         Watch torrents in this directory (default "downloads")
+  -a, --addr string             HTTP Server address (default ":8000")
+  -b, --biggest                 Prioritize the biggest file in the torrent (default true)
+  -d, --debug                   Enable seeding (default true)
+  -c, --discovery               Enable mDNS discovery (default true)
+  -D, --download-limit int      Download limit
+  -g, --gui                     Runs graphical interface (default true)
+  -h, --help                    help for server
+  -p, --open                    Open service address in the browser
+  -o, --out string              Output directory (default "downloads")
+  -s, --seed                    Enable seeding (default true)
+  -e, --serve                   Serve downloaded files (default true)
+  -t, --torrent-files string    Directory to dump torrent files (default "downloads/.torrents")
+  -U, --upload-limit int        Upload limit
+  -w, --watch-torrents string   Directory for new torrents, once added it will start download (default "downloads/.torrents")
+
 ```
 
 ## License

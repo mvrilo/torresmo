@@ -130,7 +130,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 
 		win := cocoa.NSWindow_Init(
 			frame,
-			cocoa.NSClosableWindowMask|cocoa.NSBorderlessWindowMask|cocoa.NSResizableWindowMask,
+			cocoa.NSClosableWindowMask|cocoa.NSResizableWindowMask,
 			cocoa.NSBackingStoreBuffered,
 			false,
 		)
@@ -219,30 +219,26 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 			}
 		}()
 
-		var mu sync.Mutex
-		torrents := tcli.Torrents()
 		downloading := make(map[string]interface{})
 		completed := make(map[string]interface{})
 
-		dispatch := func() {
-			core.Dispatch(func() {
-				mu.Lock()
-				defer mu.Unlock()
-
-				lines := []string{
-					fmt.Sprintf("Downloading: %d", len(downloading)),
-					fmt.Sprintf("Completed: %d", len(completed)),
-				}
-				itemTorrents.SetAttributedTitle(strings.Join(lines, "\n"))
-			})
-		}
-
+		torrents := tcli.Torrents()
 		for _, t := range torrents {
 			if t.Completed() {
 				completed[t.Name()] = nil
 				continue
 			}
 			downloading[t.Name()] = nil
+		}
+
+		dispatch := func() {
+			msgDownloading := fmt.Sprintf("Downloading: %d", len(downloading))
+			msgCompleted := fmt.Sprintf("Completed: %d", len(completed))
+			lines := strings.Join([]string{msgDownloading, msgCompleted}, "\n")
+
+			core.Dispatch(func() {
+				itemTorrents.SetAttributedTitle(lines)
+			})
 		}
 
 		dispatch()

@@ -164,6 +164,7 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 			evthandler.Publish(event.TopicDownloading, nt)
 			if nt.Completed() {
 				evthandler.Publish(event.TopicCompleted, nt)
+				break
 			}
 		}
 	}()

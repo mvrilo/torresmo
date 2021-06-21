@@ -22,17 +22,23 @@ type TorrentEntryProps = {
 };
 
 const TorrentEntry: FC<unknown> = ({ torrent }: TorrentEntryProps) => {
-  const { name, speed, infoHash, files, totalLength, bytesCompleted } = torrent;
+  const { name, speed, infoHash, files, totalLength, bytesCompleted, completed } = torrent;
   const percentage = parseFloat(bytesCompleted / totalLength * 100.0).toFixed(2);
-  const downloaded = humanBytes(bytesCompleted);
   const total = humanBytes(totalLength);
+  let downloaded = humanBytes(bytesCompleted);
+
+  let humanSpeed = "";
+  if (!completed) {
+    humanSpeed = `${humanBytes(speed*2.0)}/s`;
+    downloaded += `/${total}`;
+  }
 
   return (
     <div style={{ marginBottom: "20px" }}>
       <span>
         {name}<br/>
         {infoHash}<br/>
-        {files.length} files {percentage}% {downloaded}/{total} {humanBytes(speed)}/s
+        {files.length} files {percentage}% {downloaded} {humanSpeed}
       </span>
       <ProgressBar progress={percentage} />
     </div>

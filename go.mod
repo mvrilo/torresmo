@@ -8,7 +8,7 @@ require (
 	github.com/anacrolix/log v0.9.0
 	github.com/anacrolix/torrent v1.25.1-0.20210224024805-693c30dd889e
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
@@ -19,7 +19,7 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/progrium/macdriver v0.1.1-0.20210414011620-a7cd2cb0d1ba
+	github.com/progrium/macdriver v0.1.1-0.20210810004033-5a0f96a43b1d
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.1.3
 	github.com/ugorji/go v1.2.4 // indirect

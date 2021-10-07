@@ -2,18 +2,15 @@ package torresmo
 
 import (
 	"context"
-	"embed"
 	"io/fs"
 	gohttp "net/http"
 	"time"
 
 	"github.com/mvrilo/torresmo/event"
 	"github.com/mvrilo/torresmo/log"
+	"github.com/mvrilo/torresmo/static"
 	"github.com/mvrilo/torresmo/torrent"
 )
-
-//go:embed static/dist
-var staticFiles embed.FS
 
 type Torresmo struct {
 	HTTPServer    *gohttp.Server
@@ -47,7 +44,7 @@ func New() (*Torresmo, error) {
 	logger := log.NewLogger()
 	wshandler := event.NewWebsocket(logger)
 
-	staticFiles, err := fs.Sub(staticFiles, "static/dist")
+	staticFiles, err := fs.Sub(static.Files, "dist")
 	if err != nil {
 		return nil, err
 	}

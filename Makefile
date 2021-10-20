@@ -3,7 +3,7 @@
 COMMIT = $(shell git rev-parse --short HEAD)
 VERSION = $(shell cat version)
 LDFLAGS = -X main.Commit=$(COMMIT) -X main.Version=$(VERSION)
-GCFLAGS = -N -v -l -e -m=2 -d=checkptr
+GCFLAGS = -l -m=2 -d=checkptr
 GODEBUG = cgocheck=2
 
 all: torresmo

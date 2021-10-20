@@ -25,9 +25,6 @@ func (t *Torresmo) Shutdown(ctx context.Context, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	log.Info("Shutting down torrent client")
-	t.TorrentClient.Stop()
-
 	if t.HTTPServer != nil {
 		log.Info("Shutting down http server")
 
@@ -35,6 +32,9 @@ func (t *Torresmo) Shutdown(ctx context.Context, timeout time.Duration) error {
 			return err
 		}
 	}
+
+	log.Info("Shutting down torrent client")
+	t.TorrentClient.Stop()
 
 	return nil
 }

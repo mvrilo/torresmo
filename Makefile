@@ -8,10 +8,10 @@ GODEBUG = cgocheck=2
 
 all: torresmo
 
-torresmo: static/dist/bundle.js
+torresmo: prepare static/dist/bundle.js
 	time go build -ldflags="-s -w $(LDFLAGS)" -o torresmo cmd/torresmo/*.go
 
-torresmo-dev: prepare web
+torresmo-dev: web
 	time go build -gcflags="$(GCFLAGS)" -ldflags="$(LDFLAGS)" -race -o torresmo-dev cmd/torresmo/*.go
 
 run: torresmo

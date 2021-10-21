@@ -36,8 +36,7 @@ const TorrentEntry: FC<unknown> = ({ torrent }: TorrentEntryProps) => {
   return (
     <div style={{ marginBottom: "20px" }}>
       <span>
-        {name}<br/>
-        {infoHash}<br/>
+        {name} {infoHash}<br/>
         {files.length} files {percentage}% {downloaded} {humanSpeed}
       </span>
       <ProgressBar progress={percentage} />

@@ -28,7 +28,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(serverCmd(torresm))
-	rootCmd.AddCommand(discoverCmd(torresm))
+	rootCmd.AddCommand(discoverCmd())
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {

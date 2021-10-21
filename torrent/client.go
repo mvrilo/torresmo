@@ -142,12 +142,22 @@ func (c *client) Stop() {
 
 func (c *client) download(t *torren.Torrent) chan Torrent {
 	ch := make(chan Torrent)
+
 	go func() {
-		<-t.GotInfo()
-		t.DownloadAll()
-		c.writeTorrentFile(t)
+		if t.Info() == nil {
+			<-t.GotInfo()
+		}
 
 		nt := newTorrent(t)
+		ticker := time.NewTicker(2 * time.Second)
+		<-ticker.C
+
+		if nt.Completed() {
+			return
+		}
+
+		t.DownloadAll()
+		c.writeTorrentFile(t)
 		ch <- nt
 
 		evthandler := c.eventHandler
@@ -157,15 +167,16 @@ func (c *client) download(t *torren.Torrent) chan Torrent {
 			BiggestFileFromTorrent(nt).Now()
 		}
 
-		ticker := time.NewTicker(500 * time.Millisecond)
 		for {
 			<-ticker.C
-			nt = newTorrent(t)
-			evthandler.Publish(event.TopicDownloading, nt)
+
+			nt := newTorrent(t)
 			if nt.Completed() {
 				evthandler.Publish(event.TopicCompleted, nt)
 				break
 			}
+
+			evthandler.Publish(event.TopicDownloading, nt)
 		}
 	}()
 	return ch

@@ -15,13 +15,13 @@ torresmo-dev: web
 	time go build -gcflags="$(GCFLAGS)" -ldflags="$(LDFLAGS)" -race -o torresmo-dev cmd/torresmo/*.go
 
 run: torresmo
-	./torresmo server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=9000
+	./torresmo server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
 
 dev: torresmo-dev
-	GODEBUG=$(GODEBUG) ./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=90
+	GODEBUG=$(GODEBUG) ./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
 
 debug: torresmo-dev
-	GODEBUG=$(GODEBUG) ./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=100 --download-limit=500000
+	GODEBUG=$(GODEBUG) ./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
 
 tools/macapp/macapp:
 	time go build -o ./tools/macapp/macapp ./tools/macapp/main.go

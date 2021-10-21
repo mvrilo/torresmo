@@ -23,7 +23,8 @@ type Torrent interface {
 	String() string
 }
 
-type entry struct {
+type torrent struct {
+	t              *torren.Torrent
 	uri            string
 	name           string
 	numPieces      int
@@ -73,7 +74,8 @@ func newTorrent(t *torren.Torrent) Torrent {
 		nodes = append(nodes, string(node))
 	}
 
-	return entry{
+	return torrent{
+		t:              t,
 		files:          files,
 		nodes:          nodes,
 		name:           name,
@@ -85,16 +87,16 @@ func newTorrent(t *torren.Torrent) Torrent {
 	}
 }
 
-func (e entry) Files() []File          { return e.files }
-func (e entry) Downloaded() int        { return e.numPieces }
-func (e entry) InfoHash() string       { return e.infoHash }
-func (e entry) Name() string           { return e.name }
-func (e entry) URI() string            { return e.uri }
-func (e entry) TotalLength() uint64    { return e.totalLength }
-func (e entry) BytesCompleted() uint64 { return e.bytesCompleted }
-func (e entry) Completed() bool        { return e.BytesCompleted() == e.TotalLength() }
+func (e torrent) Files() []File          { return e.files }
+func (e torrent) InfoHash() string       { return e.infoHash }
+func (e torrent) Name() string           { return e.name }
+func (e torrent) URI() string            { return e.uri }
+func (e torrent) TotalLength() uint64    { return e.totalLength }
+func (e torrent) Downloaded() int        { return e.t.NumPieces() }
+func (e torrent) BytesCompleted() uint64 { return uint64(e.t.BytesCompleted()) }
+func (e torrent) Completed() bool        { return e.BytesCompleted() == e.TotalLength() }
 
-func (e entry) MarshalJSON() ([]byte, error) {
+func (e torrent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		// Nodes []
 		Files          []File `json:"files"`
@@ -125,7 +127,7 @@ func truncate(s string, i int) string {
 	return s
 }
 
-func (e entry) String() string {
+func (e torrent) String() string {
 	name := truncate(e.name, 16)
 	percentage := float64(e.bytesCompleted) / float64(e.totalLength) * 100.0
 	completed := strings.ToLower(bytefmt.ByteSize(e.bytesCompleted))

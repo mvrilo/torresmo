@@ -6,13 +6,12 @@ import (
 	"log"
 	"strings"
 
-	"github.com/mvrilo/torresmo"
 	"github.com/mvrilo/torresmo/mdns"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 )
 
-func discoverCmd(torresm *torresmo.Torresmo) *cobra.Command {
+func discoverCmd() *cobra.Command {
 	log.SetOutput(io.Discard)
 	var openp bool
 

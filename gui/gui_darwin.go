@@ -99,11 +99,7 @@ func wsWatch(ctx context.Context, addr string) (chan tevent.Message, error) {
 	go func() {
 		for {
 			msg, op, err := wsutil.ReadServerData(conn)
-			if err != nil && err == io.EOF {
-				continue
-			}
-
-			if op == ws.OpContinuation {
+			if err != nil && err == io.EOF || op == ws.OpContinuation {
 				continue
 			}
 
@@ -130,7 +126,7 @@ func (g *GuiMac) setup(req core.NSURLRequest, config webkit.WKWebViewConfigurati
 
 		win := cocoa.NSWindow_Init(
 			frame,
-			cocoa.NSClosableWindowMask|cocoa.NSResizableWindowMask,
+			cocoa.NSTitledWindowMask|cocoa.NSResizableWindowMask,
 			cocoa.NSBackingStoreBuffered,
 			false,
 		)

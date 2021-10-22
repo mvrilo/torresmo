@@ -9,9 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Commit string
-var Version string
-var FullVersion = fmt.Sprintf("%s (%s)", Version, Commit)
+var (
+	Commit      string
+	Version     string
+	FullVersion = fmt.Sprintf("%s (%s)", Version, Commit)
+)
 
 func main() {
 	runtime.LockOSThread()

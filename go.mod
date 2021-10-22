@@ -16,7 +16,6 @@ require (
 	github.com/goreleaser/goreleaser v0.168.1
 	github.com/hashicorp/mdns v1.0.4
 	github.com/json-iterator/go v1.1.10
-	github.com/kr/pretty v0.3.0
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/progrium/macdriver v0.1.1-0.20210810004033-5a0f96a43b1d

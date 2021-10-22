@@ -43,14 +43,13 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 				os.Exit(1)
 			}
 
-			ctx := context.Background()
 			torresm.Logger.Info(fmt.Sprintf("Starting HTTP server at %s", addr))
 			var outFiles fs.FS
 			if serve {
 				outFiles = os.DirFS(out)
 			}
 
-			torresm.HTTPHandler = http.NewHandler(
+			handler := http.NewHandler(
 				torresm.TorrentClient,
 				torresm.Logger,
 				torresm.StaticFiles,
@@ -61,7 +60,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 
 			torresm.HTTPServer = &gohttp.Server{
 				Addr:    addr,
-				Handler: torresm.HTTPHandler,
+				Handler: handler,
 			}
 
 			go func() {
@@ -124,7 +123,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 			signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 			<-sig
 
-			if err := torresm.Shutdown(ctx, 10*time.Second); err != nil {
+			if err := torresm.Shutdown(context.Background(), 10*time.Second); err != nil {
 				log.Error("Error shutting down server:", err)
 			}
 		},

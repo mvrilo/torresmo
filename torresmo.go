@@ -14,7 +14,6 @@ import (
 
 type Torresmo struct {
 	HTTPServer    *gohttp.Server
-	HTTPHandler   gohttp.Handler
 	EventHandler  event.Handler
 	TorrentClient torrent.Client
 	Logger        log.Logger

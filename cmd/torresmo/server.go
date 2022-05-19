@@ -132,7 +132,7 @@ func serverCmd(torresm *torresmo.Torresmo) *cobra.Command {
 	srvCmd.Flags().BoolVarP(&biggestFirst, "biggest", "b", true, "Prioritize the biggest file in the torrent")
 	srvCmd.Flags().BoolVarP(&debug, "debug", "d", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&enableDiscovery, "discovery", "c", true, "Enable mDNS discovery")
-	srvCmd.Flags().BoolVarP(&guiFlag, "gui", "g", true, "Runs graphical interface")
+	srvCmd.Flags().BoolVarP(&guiFlag, "gui", "g", false, "Runs graphical interface")
 	srvCmd.Flags().BoolVarP(&openp, "open", "p", false, "Open service address in the browser")
 	srvCmd.Flags().BoolVarP(&seedFlag, "seed", "s", true, "Enable seeding")
 	srvCmd.Flags().BoolVarP(&serve, "serve", "e", true, "Serve downloaded files")

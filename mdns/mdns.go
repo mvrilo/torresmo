@@ -28,7 +28,7 @@ func SearchServices() []string {
 	go func() {
 		defer wg.Done()
 		for entry := range entriesCh {
-			if !strings.ContainsAny(entry.Name, ServiceName) {
+			if !strings.Contains(entry.Name, ServiceName) {
 				continue
 			}
 

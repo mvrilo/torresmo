@@ -24,5 +24,5 @@ require (
 	github.com/ugorji/go v1.2.4 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	honnef.co/go/tools v0.0.1-2020.1.6
+	honnef.co/go/tools v0.3.2
 )

@@ -1,10 +1,8 @@
-.PHONY: all run dev debug mac web prepare clean test release macapp
+.PHONY: all run dev debug mac web prepare clean test release
 
 COMMIT = $(shell git rev-parse --short HEAD)
 VERSION = $(shell cat version)
 LDFLAGS = -X main.Commit=$(COMMIT) -X main.Version=$(VERSION)
-GCFLAGS = -l -m=2 -d=checkptr
-GODEBUG = cgocheck=2
 
 all: torresmo
 
@@ -12,30 +10,16 @@ torresmo: prepare static/dist/bundle.js
 	time go build -ldflags="-s -w $(LDFLAGS)" -o torresmo cmd/torresmo/*.go
 
 torresmo-dev: web
-	time go build -gcflags="$(GCFLAGS)" -ldflags="$(LDFLAGS)" -race -o torresmo-dev cmd/torresmo/*.go
+	time go build -ldflags="$(LDFLAGS)" -race -o torresmo-dev cmd/torresmo/*.go
 
 run: torresmo
-	./torresmo server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
+	./torresmo server --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
 
 dev: torresmo-dev
-	GODEBUG=$(GODEBUG) ./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
+	./torresmo-dev server --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
 
 debug: torresmo-dev
-	GODEBUG=$(GODEBUG) ./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
-
-tools/macapp/macapp:
-	time go build -o ./tools/macapp/macapp ./tools/macapp/main.go
-
-macapp: tools/macapp/macapp torresmo
-	cp torresmo assets/;
-	./tools/macapp/macapp \
-		-assets=./assets \
-		-bin=torresmo-mac.sh \
-		-dmg=Torresmo \
-		-name=Torresmo \
-		-o=./dist \
-		-identifier co.murilo.torresmo \
-		-icon=./assets/icon.png
+	./torresmo-dev server --debug --gui --discovery --serve --out=downloads --torrent-files=downloads/.torrents --addr=:8000 --upload-limit=900 --download-limit=90000
 
 web: static/dist/bundle.js
 

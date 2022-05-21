@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "license": "MIT",
   "scripts": {
-    "build": "esbuild src/index.tsx --platform=browser --bundle --outfile=dist/bundle.js",
+    "build": "go run github.com/evanw/esbuild/cmd/esbuild src/index.tsx --platform=browser --bundle --outfile=dist/bundle.js",
     "lint": "eslint --config .eslintrc.js src/*.tsx src/*.ts"
   },
   "devDependencies": {

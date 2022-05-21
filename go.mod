@@ -7,6 +7,7 @@ require (
 	github.com/DeanThompson/ginpprof v0.0.0-20201112072838-007b1e56b2e1
 	github.com/anacrolix/log v0.9.0
 	github.com/anacrolix/torrent v1.33.0
+	github.com/evanw/esbuild v0.14.39
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.0
 	github.com/go-playground/validator/v10 v10.4.1

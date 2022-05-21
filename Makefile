@@ -27,7 +27,7 @@ debug: torresmo-dev
 web: static/dist/bundle.js
 
 static/dist/bundle.js:
-	@(cd static; yarn build)
+	@(cd static; yarn && yarn build)
 
 check:
 	go fmt ./...

@@ -8,8 +8,8 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.17.x, 1.18.x]
-        platform: [alpine-latest, macos-latest]
+        go-version: [1.18.x]
+        platform: [ubuntu-latest, macos-latest]
       fail-fast: false
     runs-on: ${{ matrix.platform }}
     steps:
@@ -35,8 +35,8 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.17.x, 1.18.x]
-        platform: [alpine-latest, macos-latest]
+        go-version: [1.18.x]
+        platform: [ubuntu-latest, macos-latest]
       fail-fast: false
     runs-on: ${{ matrix.platform }}
     steps:
